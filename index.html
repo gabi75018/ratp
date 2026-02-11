@@ -1,1252 +1,301 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Poste RER C Ultime - Simulation</title>
-  <style>
-    * { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    body { margin: 0; background: #050608; color: #f5f5f5; display: flex; flex-direction: column; min-height: 100vh; }
-    header { padding: 10px 20px; background: #111318; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #22252b; }
-    .header-left { display: flex; align-items: center; gap: 12px; }
-    .logo { width: 36px; height: 36px; border-radius: 50%; background: #f7d117; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px; color: #000; }
-    .line-label { font-size: 13px; color: #f7d117; font-weight: 600; }
-    .station-name { font-size: 18px; font-weight: 600; }
-    .header-right { display: flex; align-items: center; gap: 16px; font-size: 13px; color: #c5c5c5; }
-    .clock { font-variant-numeric: tabular-nums; font-size: 15px; }
-    .badge-live { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: #f7d117; }
-    .badge-live-dot { width: 8px; height: 8px; border-radius: 50%; background: #f7d117; box-shadow: 0 0 8px #f7d117; }
-
-    nav { display: flex; gap: 8px; padding: 6px 20px; background: #0b0d13; border-bottom: 1px solid #22252b; }
-    .tab-btn { border: none; border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer; background: #22252b; color: #f5f5f5; }
-    .tab-btn.active { background: #1f6feb; }
-
-    main { flex: 1; display: grid; grid-template-columns: 3fr 2fr; min-height: 0; }
-    .panel { padding: 16px 20px; border-right: 1px solid #22252b; display: flex; flex-direction: column; min-height: 0; }
-    .side { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
-
-    .panel-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
-    .panel-title { font-size: 15px; text-transform: uppercase; letter-spacing: 0.12em; color: #9fa3b5; }
-    .panel-subtitle { font-size: 12px; color: #7f8494; }
-
-    .filters { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; font-size: 12px; }
-    .filters select { padding: 4px 8px; border-radius: 4px; border: 1px solid #333745; background: #050608; color: #f5f5f5; font-size: 12px; }
-    .filters button { padding: 4px 8px; border-radius: 4px; border: none; background: #303342; color: #f5f5f5; font-size: 11px; cursor: pointer; }
-    .filters button.active { background: #1f6feb; }
-
-    .table-wrapper { flex: 1; overflow: auto; border-radius: 8px; border: 1px solid #22252b; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    thead { position: sticky; top: 0; background: #111318; z-index: 1; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; color: #8b90a0; }
-    th, td { padding: 6px 8px; border-bottom: 1px solid #22252b; white-space: nowrap; }
-    tbody tr:nth-child(even) { background: #101219; }
-    tbody tr:nth-child(odd) { background: #080a10; }
-    tbody tr.highlight { animation: highlight 0.8s ease-out; }
-    @keyframes highlight { from { background-color: #264f78; } to { background-color: inherit; } }
-
-    .line-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; padding: 2px 6px; border-radius: 999px; font-size: 11px; font-weight: 700; color: #000; background: #f7d117; }
-    .time { font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; }
-    .status { font-size: 11px; text-align: right; font-weight: 500; }
-    .status-OK { color: #00d084; }
-    .status-APPROCHE { color: #ffb347; }
-    .status-QUAI { color: #f7d117; }
-    .status-DEPART { color: #9fa3b5; }
-    .status-SUIVANT { color: #7f8494; }
-    .status-RETARD { color: #ffb347; }
-    .status-INCIDENT { color: #ff5c5c; }
-    .status-SUPPRIME { color: #ff5c5c; text-decoration: line-through; }
-    .status-SUPPRESSION { color: #ffb347; }
-    .status-TERMINUS { color: #f7d117; }
-
-    .control-section { border-radius: 8px; border: 1px solid #22252b; padding: 10px 12px; background: #0b0d13; }
-    .control-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #d0d3df; }
-    .control-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 8px; }
-    .control-row-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 8px; }
-    label { font-size: 11px; color: #9fa3b5; display: block; margin-bottom: 2px; }
-    select, input[type="number"], input[type="text"], textarea { width: 100%; padding: 4px 6px; border-radius: 4px; border: 1px solid #333745; background: #050608; color: #f5f5f5; font-size: 12px; }
-    textarea { resize: vertical; min-height: 60px; }
-    .btn-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
-    button { border: none; border-radius: 4px; padding: 5px 9px; font-size: 12px; cursor: pointer; background: #1f6feb; color: #fff; display: inline-flex; align-items: center; gap: 4px; }
-    button.secondary { background: #303342; }
-    button.danger { background: #d73a49; }
-    button.warning { background: #ffb347; color: #000; }
-    button:active { transform: translateY(1px); }
-
-    .line-diagram { font-size: 11px; color: #9fa3b5; margin-top: 6px; white-space: nowrap; overflow-x: auto; }
-    .line-diagram span { display: inline-block; padding: 2px 6px; margin-right: 2px; border-radius: 999px; border: 1px solid #333745; }
-    .line-diagram span.current { background: #f7d117; color: #000; border-color: #f7d117; }
-
-    .message-preview { margin-top: 6px; padding: 8px; border-radius: 6px; border: 1px solid #44495a; background: #111318; font-size: 12px; }
-    .message-preview-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: #9fa3b5; margin-bottom: 4px; }
-
-    .log-panel { margin-top: 10px; border-radius: 8px; border: 1px solid #22252b; background: #050608; padding: 8px; font-size: 11px; max-height: 180px; overflow-y: auto; }
-    .log-entry { margin-bottom: 3px; color: #a0a4b3; }
-    .log-time { color: #7f8494; margin-right: 4px; }
-    .log-tag { font-size: 10px; padding: 1px 4px; border-radius: 999px; margin-right: 4px; }
-    .log-tag-TRAIN { background: #1f6feb33; color: #7fb0ff; }
-    .log-tag-INCIDENT { background: #ff5c5c33; color: #ff9b9b; }
-    .log-tag-MSG { background: #f7d11733; color: #f7d117; }
-
-    .info-banner { margin-bottom: 8px; padding: 6px 8px; border-radius: 6px; font-size: 11px; display: flex; justify-content: space-between; align-items: center; }
-    .info-banner-normal { background: #0b1a10; border: 1px solid #1f6f3a; color: #9fe3b5; }
-    .info-banner-perturbed { background: #1a130b; border: 1px solid #c27b25; color: #ffd39b; }
-    .info-banner-incident { background: #1a0b0b; border: 1px solid #c23b3b; color: #ffb3b3; }
-
-    .hidden { display: none !important; }
-
-    footer { padding: 6px 20px; font-size: 11px; color: #7b7f8f; border-top: 1px solid #22252b; display: flex; justify-content: space-between; align-items: center; background: #050608; }
-
-    @media (max-width: 1100px) {
-      main { grid-template-columns: 1fr; }
-      .panel { border-right: none; border-bottom: 1px solid #22252b; }
+<meta charset="UTF-8">
+<title>Pannel de Secours - Simulation</title>
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #1b1b1b;
+        color: white;
+        display: flex;
+        height: 100vh;
     }
-    @media (max-width: 700px) {
-      .control-row, .control-row-3 { grid-template-columns: 1fr; }
-      nav { flex-wrap: wrap; }
+    header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: #111;
+        padding: 10px;
+        text-align: center;
+        z-index: 10;
+        border-bottom: 2px solid #333;
     }
-  </style>
+    .container {
+        display: flex;
+        width: 100%;
+        margin-top: 60px;
+    }
+    .column {
+        flex: 1;
+        padding: 10px;
+        overflow-y: auto;
+        border-right: 2px solid #333;
+    }
+    .column:last-child {
+        border-right: none;
+    }
+    .call-card {
+        background: #2a2a2a;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-left: 5px solid #555;
+    }
+    .btn {
+        padding: 6px 10px;
+        margin: 3px;
+        background: #444;
+        border: none;
+        color: white;
+        cursor: pointer;
+    }
+    .btn:hover {
+        background: #666;
+    }
+    .service-btn {
+        background: #0055aa;
+    }
+    .service-btn:hover {
+        background: #0077dd;
+    }
+    textarea {
+        width: 100%;
+        height: 80px;
+        background: #222;
+        color: white;
+        border: 1px solid #444;
+        padding: 5px;
+    }
+    .section-title {
+        font-size: 20px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #444;
+        padding-bottom: 5px;
+    }
+</style>
 </head>
 <body>
+
 <header>
-  <div class="header-left">
-    <div class="logo">C</div>
-    <div>
-      <div class="line-label">RER C — Simulation complète</div>
-      <div class="station-name" id="current-station-label">Gare observée : Paris Austerlitz</div>
-    </div>
-  </div>
-  <div class="header-right">
-    <span class="badge-live">
-      <span class="badge-live-dot"></span>
-      Circulation simulée en temps réel
-    </span>
-    <span class="clock" id="clock"></span>
-  </div>
+    <h2>Centre de Traitement des Appels d'Urgence – Simulation</h2>
+    <div id="stats"></div>
 </header>
 
-<nav>
-  <button class="tab-btn active" data-tab="voyageur">Vue voyageur</button>
-  <button class="tab-btn" data-tab="pcc">Vue PCC / technique</button>
-  <button class="tab-btn" data-tab="ligne">Vue ligne</button>
-  <button class="tab-btn" data-tab="messages">Messages & incidents</button>
-</nav>
+<div class="container">
 
-<main>
-  <!-- VUE VOYAGEUR -->
-  <section class="panel" id="panel-voyageur">
-    <div class="panel-header">
-      <div>
-        <div class="panel-title">Prochains trains</div>
-        <div class="panel-subtitle" id="board-subtitle">Vue locale — Paris Austerlitz</div>
-      </div>
-      <div style="font-size:11px; color:#7f8494;" id="stats"></div>
+    <!-- FILE D'APPELS -->
+    <div class="column" id="queue">
+        <div class="section-title">📞 Appels entrants</div>
+        <div id="queue-list"></div>
     </div>
 
-    <div id="info-banner" class="info-banner info-banner-normal">
-      <span id="info-banner-text">Trafic normal sur l’ensemble de la ligne.</span>
-      <span id="info-banner-tag">Régulateur</span>
+    <!-- APPEL ACTIF -->
+    <div class="column" id="active">
+        <div class="section-title">🎧 Appel en cours</div>
+        <div id="active-call">Aucun appel sélectionné.</div>
     </div>
 
-    <div class="filters">
-      <span>Gare :</span>
-      <select id="station-select"></select>
-      <button id="dir-all" class="active">Tous sens</button>
-      <button id="dir-up">Vers amont</button>
-      <button id="dir-down">Vers aval</button>
+    <!-- ACTIONS + HISTORIQUE -->
+    <div class="column">
+        <div class="section-title">🚨 Actions en cours</div>
+        <div id="actions"></div>
+
+        <div class="section-title" style="margin-top:20px;">📚 Historique</div>
+        <div id="history"></div>
     </div>
 
-    <div class="table-wrapper">
-      <table>
-        <thead>
-        <tr>
-          <th>Mission</th>
-          <th>Destination</th>
-          <th>Origine</th>
-          <th>État</th>
-          <th>Dans</th>
-        </tr>
-        </thead>
-        <tbody id="board-body"></tbody>
-      </table>
-    </div>
-
-    <div class="line-diagram" id="line-diagram"></div>
-  </section>
-
-  <!-- VUE PCC -->
-  <section class="panel hidden" id="panel-pcc">
-    <div class="panel-header">
-      <div>
-        <div class="panel-title">Vue PCC — Trains en circulation</div>
-        <div class="panel-subtitle">Liste technique de tous les trains sur la ligne</div>
-      </div>
-      <div style="font-size:11px; color:#7f8494;" id="pcc-stats"></div>
-    </div>
-
-    <div class="table-wrapper">
-      <table>
-        <thead>
-        <tr>
-          <th>ID</th>
-          <th>Mission</th>
-          <th>Origine</th>
-          <th>Destination</th>
-          <th>Position</th>
-          <th>Progress</th>
-          <th>Offset</th>
-          <th>Dwell</th>
-          <th>Actif</th>
-          <th>Retard</th>
-          <th>Flags</th>
-        </tr>
-        </thead>
-        <tbody id="pcc-body"></tbody>
-      </table>
-    </div>
-
-    <div class="log-panel" id="log-panel"></div>
-  </section>
-
-  <!-- VUE LIGNE -->
-  <section class="panel hidden" id="panel-ligne">
-    <div class="panel-header">
-      <div>
-        <div class="panel-title">Schéma de ligne</div>
-        <div class="panel-subtitle">Position des trains sur l’axe simplifié</div>
-      </div>
-    </div>
-
-    <div id="line-schema" style="flex:1; display:flex; flex-direction:column; gap:6px; font-size:12px; overflow:auto;"></div>
-  </section>
-
-  <!-- VUE MESSAGES -->
-  <section class="panel hidden" id="panel-messages">
-    <div class="panel-header">
-      <div>
-        <div class="panel-title">Messages & incidents</div>
-        <div class="panel-subtitle">Configuration des messages voyageurs et incidents</div>
-      </div>
-    </div>
-
-    <div class="control-section">
-      <div class="control-title">Message personnalisé</div>
-      <div class="control-row">
-        <div>
-          <label for="msg-type">Type</label>
-          <select id="msg-type">
-            <option value="normal">Information</option>
-            <option value="warning">Perturbation</option>
-            <option value="incident">Incident majeur</option>
-          </select>
-        </div>
-        <div>
-          <label for="msg-scope">Portée</label>
-          <select id="msg-scope">
-            <option value="global">Toute la ligne</option>
-            <option value="station">Gare observée</option>
-          </select>
-        </div>
-      </div>
-      <div class="control-row">
-        <div style="grid-column:1 / -1;">
-          <label for="msg-text">Texte du message</label>
-          <textarea id="msg-text" placeholder="Ex : Trafic fortement perturbé entre Juvisy et Massy Palaiseau en raison d’un incident de signalisation."></textarea>
-        </div>
-      </div>
-      <div class="btn-row">
-        <button onclick="applyCustomMessage()">Appliquer comme bandeau</button>
-        <button class="secondary" onclick="clearCustomMessage()">Revenir au trafic normal</button>
-      </div>
-      <div class="message-preview">
-        <div class="message-preview-title">Prévisualisation</div>
-        <div id="msg-preview">Trafic normal sur l’ensemble de la ligne.</div>
-      </div>
-    </div>
-
-    <div class="control-section" style="margin-top:10px;">
-      <div class="control-title">Incidents prédéfinis</div>
-      <div class="btn-row">
-        <button class="warning" onclick="triggerPresetIncident('retard')">Retards importants</button>
-        <button class="danger" onclick="triggerPresetIncident('accident')">Accident voyageur</button>
-        <button class="danger" onclick="triggerPresetIncident('signalisation')">Panne de signalisation</button>
-        <button class="danger" onclick="triggerPresetIncident('obstacle')">Obstacle sur les voies</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- PANNEAU LATÉRAL -->
-  <aside class="side">
-    <h2 style="margin:0 0 4px; font-size:15px;">Panneau de régulation RER C</h2>
-    <p style="margin:0 0 8px; font-size:11px; color:#a0a4b3;">Ajoute, retire, modifie les trains, déclenche des retards, incidents, suppressions, terminus exceptionnels…</p>
-
-    <div class="control-section">
-      <div class="control-title">Sélection du train</div>
-      <div class="control-row">
-        <div>
-          <label for="train-filter-station">Filtrer par gare</label>
-          <select id="train-filter-station"></select>
-        </div>
-        <div>
-          <label for="train-filter-dir">Filtrer par sens</label>
-          <select id="train-filter-dir">
-            <option value="0">Tous</option>
-            <option value="1">Aval →</option>
-            <option value="-1">← Amont</option>
-          </select>
-        </div>
-      </div>
-      <div class="control-row">
-        <div>
-          <label for="train-select">Train en circulation</label>
-          <select id="train-select"></select>
-        </div>
-        <div>
-          <label>&nbsp;</label>
-          <div class="btn-row">
-            <button class="secondary" onclick="scrollToSelected()">Voir dans la liste</button>
-            <button class="danger" onclick="removeSelectedTrain()">Retirer</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="control-section">
-      <div class="control-title">Modifier le train sélectionné</div>
-      <div class="control-row-3">
-        <div>
-          <label for="edit-mission">Mission</label>
-          <input type="text" id="edit-mission" placeholder="ex : NORA">
-        </div>
-        <div>
-          <label for="edit-dest">Destination</label>
-          <input type="text" id="edit-dest" placeholder="ex : Pontoise">
-        </div>
-        <div>
-          <label for="edit-origin">Origine</label>
-          <input type="text" id="edit-origin" placeholder="ex : Massy Palaiseau">
-        </div>
-      </div>
-      <div class="control-row-3">
-        <div>
-          <label for="edit-pos">Position (gare)</label>
-          <select id="edit-pos"></select>
-        </div>
-        <div>
-          <label for="edit-dir">Sens</label>
-          <select id="edit-dir">
-            <option value="1">Aval →</option>
-            <option value="-1">← Amont</option>
-          </select>
-        </div>
-        <div>
-          <label for="edit-dwell">Temps à quai (s)</label>
-          <input type="number" id="edit-dwell" min="0" value="30">
-        </div>
-      </div>
-      <div class="btn-row">
-        <button onclick="applyEdit()">Appliquer</button>
-        <button class="secondary" onclick="forceDwell()">Forcer arrêt ici</button>
-      </div>
-      <div class="control-row-3">
-        <div>
-          <label>Retard rapide</label>
-          <div class="btn-row">
-            <button class="warning" onclick="addDelayToSelected(1)">+1 min</button>
-            <button class="warning" onclick="addDelayToSelected(3)">+3 min</button>
-            <button class="warning" onclick="addDelayToSelected(5)">+5 min</button>
-          </div>
-        </div>
-        <div>
-          <label for="delay-custom">Retard personnalisé (min)</label>
-          <input type="number" id="delay-custom" min="1" max="60" value="10">
-        </div>
-        <div>
-          <label>&nbsp;</label>
-          <button class="warning" onclick="addCustomDelay()">Appliquer retard</button>
-        </div>
-      </div>
-      <div class="btn-row">
-        <button class="warning" onclick="markTrainDelayedFlag()">Marquer “RETARDÉ”</button>
-        <button class="danger" onclick="markTrainDeletedImmediate()">Supprimer immédiatement</button>
-        <button class="danger" onclick="markTrainDeleteNext()">Supprimer à la prochaine gare</button>
-        <button class="secondary" onclick="markTrainTerminusExceptionnel()">Terminus exceptionnel ici</button>
-        <button class="secondary" onclick="restoreTrain()">Rétablir train</button>
-      </div>
-    </div>
-
-    <div class="control-section">
-      <div class="control-title">Ajouter un train</div>
-      <div class="control-row-3">
-        <div>
-          <label for="add-mission">Mission</label>
-          <input type="text" id="add-mission" placeholder="ex : NORA">
-        </div>
-        <div>
-          <label for="add-origin">Origine</label>
-          <select id="add-origin"></select>
-        </div>
-        <div>
-          <label for="add-dest">Destination</label>
-          <select id="add-dest"></select>
-        </div>
-      </div>
-      <div class="control-row-3">
-        <div>
-          <label for="add-pos">Position initiale</label>
-          <select id="add-pos"></select>
-        </div>
-        <div>
-          <label for="add-dir">Sens</label>
-          <select id="add-dir">
-            <option value="1">Aval →</option>
-            <option value="-1">← Amont</option>
-          </select>
-        </div>
-        <div>
-          <label for="add-offset">Décalage (min)</label>
-          <input type="number" id="add-offset" min="-10" max="30" value="0">
-        </div>
-      </div>
-      <div class="btn-row">
-        <button onclick="addTrain()">Ajouter</button>
-      </div>
-    </div>
-
-    <div class="control-section">
-      <div class="control-title">Modes de simulation</div>
-      <div class="btn-row">
-        <button class="secondary" onclick="setPreset('NORMAL')">Trafic normal</button>
-        <button class="warning" onclick="setPreset('RUSH')">Heure de pointe</button>
-        <button class="secondary" onclick="setPreset('NUIT')">Service réduit</button>
-        <button class="danger" onclick="clearAllTrains()">Tout retirer</button>
-      </div>
-    </div>
-  </aside>
-</main>
-
-<footer>
-  <span>Simulation non officielle — RER C simplifié, juste pour jouer au régulateur.</span>
-  <span>Tick simulation : 2s — <button class="secondary" onclick="toggleSimulation()"><span id="sim-btn-label">Pause</span></button></span>
-</footer>
+</div>
 
 <script>
-  const STATIONS = [
-    "Pontoise",
-    "Neuville-Université",
-    "Conflans-Fin d'Oise",
-    "Argenteuil",
-    "Gennevilliers",
-    "Invalides",
-    "Musée d'Orsay",
-    "Saint-Michel Notre-Dame",
-    "Paris Austerlitz",
-    "Bibliothèque François Mitterrand",
-    "Choisy-le-Roi",
-    "Juvisy",
-    "Savigny-sur-Orge",
-    "Épinay-sur-Orge",
-    "Massy Palaiseau"
-  ];
+/* ------------------------------
+   BASE DE DONNÉES SCÉNARIOS
+--------------------------------*/
+const SCENARIOS = [
+    {label:"Arrêt cardio-respiratoire", type:"Médical", prio:"P0", desc:"Victime inconsciente, ne respire plus.", victims:1},
+    {label:"Feu d'appartement", type:"Incendie", prio:"P0", desc:"Fumée importante, personnes coincées.", victims:2},
+    {label:"Accident route", type:"Accident", prio:"P1", desc:"Collision, blessé coincé.", victims:1},
+    {label:"Agression couteau", type:"Agression", prio:"P0", desc:"Victime poignardée.", victims:1},
+    {label:"Vieil homme perdu", type:"Médical", prio:"P2", desc:"Personne âgée confuse.", victims:1},
+    {label:"Odeur de gaz", type:"Risque", prio:"P1", desc:"Forte odeur de gaz.", victims:0},
+    {label:"Appel OVNI", type:"Bizarre", prio:"P3", desc:"Personne dit être observée par un OVNI.", victims:0},
+    {label:"Enfant qui rigole", type:"Douteux", prio:"P3", desc:"Probable faux appel.", victims:0},
+    {label:"Suicide pont", type:"Critique", prio:"P0", desc:"Personne menace de sauter.", victims:1},
+    {label:"Malaise métro", type:"Médical", prio:"P1", desc:"Victime inconsciente sur quai.", victims:1},
+    {label:"Voisin hurle 'je suis un poulet'", type:"Bizarre", prio:"P3", desc:"Appel très confus.", victims:0},
+    {label:"Course poursuite scooter", type:"Police", prio:"P1", desc:"Scooter refuse d'obtempérer.", victims:0},
+    {label:"Trafic suspect", type:"Douanes", prio:"P2", desc:"Camionnette suspecte près d'un entrepôt.", victims:0}
+];
 
-  const SEGMENT_MINUTES = 3;
-  const DWELL_DEFAULT = 30;
-  const TICK_MS = 2000;
+/* ------------------------------
+   VARIABLES
+--------------------------------*/
+let queue = [];
+let activeCall = null;
+let actions = [];
+let history = [];
+let callID = 1;
 
-  let trains = [];
-  let lastId = 0;
-  let simulationRunning = true;
-  let logs = [];
-  let bannerState = { type: "normal", text: "Trafic normal sur l’ensemble de la ligne.", tag: "Régulateur" };
+/* ------------------------------
+   GENERATEUR D'APPELS
+--------------------------------*/
+function generateCall() {
+    const s = SCENARIOS[Math.floor(Math.random()*SCENARIOS.length)];
+    const call = {
+        id: callID++,
+        scenario: s,
+        time: new Date().toLocaleTimeString(),
+        location: randomLocation(),
+        comments: [],
+        services: [],
+        status: "En attente"
+    };
+    queue.push(call);
+    renderQueue();
+}
 
-  function logEvent(type, text) {
-    const now = new Date();
-    logs.unshift({
-      time: now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
-      type,
-      text
+function randomLocation() {
+    const streets = ["Rue Victor Hugo", "Avenue de Paris", "Boulevard des Lilas", "Rue du Port", "Chemin des Vignes"];
+    return streets[Math.floor(Math.random()*streets.length)] + ", " + (Math.floor(Math.random()*50)+1);
+}
+
+/* ------------------------------
+   AFFICHAGE FILE D'APPELS
+--------------------------------*/
+function renderQueue() {
+    const div = document.getElementById("queue-list");
+    div.innerHTML = "";
+    queue.forEach(call => {
+        div.innerHTML += `
+            <div class="call-card">
+                <b>#${call.id}</b> – ${call.scenario.label}<br>
+                <i>${call.scenario.prio}</i> – ${call.location}<br>
+                <button class="btn" onclick="takeCall(${call.id})">Prendre en charge</button>
+            </div>
+        `;
     });
-    if (logs.length > 200) logs.pop();
-    renderLogs();
-  }
+}
 
-  function renderLogs() {
-    const panel = document.getElementById("log-panel");
-    panel.innerHTML = logs.map(l => `
-      <div class="log-entry">
-        <span class="log-time">${l.time}</span>
-        <span class="log-tag log-tag-${l.type}">${l.type}</span>
-        <span>${l.text}</span>
-      </div>
+/* ------------------------------
+   PRENDRE UN APPEL
+--------------------------------*/
+function takeCall(id) {
+    activeCall = queue.find(c => c.id === id);
+    queue = queue.filter(c => c.id !== id);
+    renderQueue();
+    renderActiveCall();
+}
+
+/* ------------------------------
+   AFFICHAGE APPEL ACTIF
+--------------------------------*/
+function renderActiveCall() {
+    if (!activeCall) {
+        document.getElementById("active-call").innerHTML = "Aucun appel sélectionné.";
+        return;
+    }
+
+    document.getElementById("active-call").innerHTML = `
+        <div class="call-card">
+            <h3>Appel #${activeCall.id}</h3>
+            <b>${activeCall.scenario.label}</b><br>
+            Type : ${activeCall.scenario.type}<br>
+            Priorité : ${activeCall.scenario.prio}<br>
+            Victimes : ${activeCall.scenario.victims}<br>
+            Localisation : ${activeCall.location}<br>
+            <p>${activeCall.scenario.desc}</p>
+
+            <h4>Commentaires</h4>
+            <textarea id="comment"></textarea>
+            <button class="btn" onclick="addComment()">Ajouter</button>
+            <div id="comment-list">${activeCall.comments.map(c=>"<div>• "+c+"</div>").join("")}</div>
+
+            <h4>Envoyer des services</h4>
+            ${serviceButton("SAMU")}
+            ${serviceButton("Pompiers")}
+            ${serviceButton("Police")}
+            ${serviceButton("Gendarmerie")}
+            ${serviceButton("SMUR")}
+            ${serviceButton("Hélico")}
+            ${serviceButton("DOC")}
+            ${serviceButton("Douanes")}
+
+            <h4>Statut</h4>
+            <button class="btn" onclick="closeCall()">Clôturer l'appel</button>
+        </div>
+    `;
+}
+
+function serviceButton(name) {
+    return `<button class="btn service-btn" onclick="sendService('${name}')">${name}</button>`;
+}
+
+/* ------------------------------
+   COMMENTAIRES
+--------------------------------*/
+function addComment() {
+    const txt = document.getElementById("comment").value.trim();
+    if (!txt) return;
+    activeCall.comments.push(txt);
+    renderActiveCall();
+}
+
+/* ------------------------------
+   ENVOI DE SERVICES
+--------------------------------*/
+function sendService(s) {
+    activeCall.services.push(s);
+    actions.push({call: activeCall.id, service: s, time: new Date().toLocaleTimeString()});
+    renderActions();
+    renderActiveCall();
+}
+
+function renderActions() {
+    const div = document.getElementById("actions");
+    div.innerHTML = actions.map(a => `
+        <div class="call-card">
+            #${a.call} – ${a.service} envoyé à ${a.time}
+        </div>
     `).join("");
-  }
+}
+
+/* ------------------------------
+   CLÔTURE APPEL
+--------------------------------*/
+function closeCall() {
+    history.push(activeCall);
+    activeCall = null;
+    renderActiveCall();
+    renderHistory();
+}
+
+function renderHistory() {
+    const div = document.getElementById("history");
+    div.innerHTML = history.map(h => `
+        <div class="call-card">
+            <b>#${h.id}</b> – ${h.scenario.label}<br>
+            Services envoyés : ${h.services.join(", ") || "Aucun"}<br>
+            Commentaires : ${h.comments.length}
+        </div>
+    `).join("");
+}
+
+/* ------------------------------
+   STATISTIQUES
+--------------------------------*/
+setInterval(() => {
+    document.getElementById("stats").innerHTML =
+        `Appels en attente: ${queue.length} | En cours: ${activeCall ? 1 : 0} | Historique: ${history.length}`;
+}, 500);
+
+/* ------------------------------
+   LANCEMENT AUTOMATIQUE
+--------------------------------*/
+setInterval(() => generateCall(), 15000 + Math.random()*5000); // 3–4 appels/min
 
-  function createTrain({mission, originIndex, destIndex, positionIndex, direction, offsetMinutes}) {
-    const t = {
-      id: ++lastId,
-      mission: mission || ("C" + lastId),
-      originIndex,
-      destIndex,
-      positionIndex,
-      direction,
-      progress: 0,
-      dwellRemaining: 0,
-      offset: offsetMinutes * 60,
-      active: true,
-      delay: 0,
-      deleted: false,
-      deleteNext: false,
-      terminusExceptionnel: false
-    };
-    logEvent("TRAIN", `Train ${t.mission} ajouté (${STATIONS[originIndex]} → ${STATIONS[destIndex]}).`);
-    return t;
-  }
-
-  function generateInitialTrains(mode = "NORMAL") {
-    const list = [];
-    function add(mission, originName, destName, posName, dir, offsetMin) {
-      const originIndex = STATIONS.indexOf(originName);
-      const destIndex = STATIONS.indexOf(destName);
-      const positionIndex = STATIONS.indexOf(posName);
-      if (originIndex === -1 || destIndex === -1 || positionIndex === -1) return;
-      list.push(createTrain({ mission, originIndex, destIndex, positionIndex, direction: dir, offsetMinutes: offsetMin }));
-    }
-
-    if (mode === "NORMAL" || mode === "RUSH") {
-      add("NORA", "Pontoise", "Massy Palaiseau", "Conflans-Fin d'Oise", 1, -2);
-      add("CIME", "Pontoise", "Juvisy", "Gennevilliers", 1, 0);
-      add("VICK", "Massy Palaiseau", "Pontoise", "Juvisy", -1, -1);
-      add("GOTA", "Juvisy", "Pontoise", "Choisy-le-Roi", -1, 3);
-      add("ELBA", "Massy Palaiseau", "Pontoise", "Savigny-sur-Orge", -1, 5);
-      if (mode === "RUSH") {
-        add("NORA", "Pontoise", "Massy Palaiseau", "Argenteuil", 1, 1);
-        add("CIME", "Pontoise", "Juvisy", "Invalides", 1, 4);
-        add("VICK", "Massy Palaiseau", "Pontoise", "Épinay-sur-Orge", -1, 2);
-      }
-    } else if (mode === "NUIT") {
-      add("NORA", "Pontoise", "Massy Palaiseau", "Saint-Michel Notre-Dame", 1, 0);
-      add("VICK", "Massy Palaiseau", "Pontoise", "Juvisy", -1, 4);
-    }
-
-    return list;
-  }
-
-  function travelTimeBetween(i1, i2) {
-    const segments = Math.abs(i2 - i1);
-    return segments * SEGMENT_MINUTES * 60;
-  }
-
-  function etaToStation(train, stationIndex) {
-    if (!train.active || train.deleted) return Infinity;
-    if (train.offset > 0) {
-      const base = train.offset;
-      const travel = travelTimeBetween(train.positionIndex, stationIndex);
-      return base + travel + train.delay;
-    }
-
-    const dir = train.direction;
-    const pos = train.positionIndex;
-    const prog = train.progress;
-    const dwell = train.dwellRemaining;
-
-    if ((dir === 1 && stationIndex < pos) || (dir === -1 && stationIndex > pos)) return Infinity;
-
-    if (stationIndex === pos && prog === 0 && dwell > 0) return 0;
-
-    let time = 0;
-
-    if (prog === 0) {
-      time += dwell;
-      const nextIndex = pos + dir;
-      time += travelTimeBetween(pos, nextIndex);
-      let currentIndex = nextIndex;
-      while (currentIndex !== stationIndex) {
-        const next = currentIndex + dir;
-        time += travelTimeBetween(currentIndex, next);
-        currentIndex = next;
-      }
-      return time + train.delay;
-    } else {
-      const fromIndex = dir === 1 ? pos : pos - 1;
-      const toIndex = fromIndex + dir;
-      const segmentTime = travelTimeBetween(fromIndex, toIndex);
-      const remainingSegment = (1 - prog) * segmentTime;
-      time += remainingSegment;
-      let currentIndex = toIndex;
-      while (currentIndex !== stationIndex) {
-        const next = currentIndex + dir;
-        time += travelTimeBetween(currentIndex, next);
-        currentIndex = next;
-      }
-      return time + train.delay;
-    }
-  }
-
-  function formatEta(seconds) {
-    if (seconds === Infinity) return "—";
-    if (seconds <= 0) return "À quai";
-    const min = Math.floor(seconds / 60);
-    const sec = Math.round(seconds % 60);
-    if (min === 0) return sec + " s";
-    return min + " min " + (sec < 10 ? "0" + sec : sec + " s");
-  }
-
-  function statusForTrain(train, eta) {
-    if (train.deleted) return {code: "SUPPRIME", label: "Supprimé"};
-    if (train.deleteNext) return {code: "SUPPRESSION", label: "Supprimé à la prochaine gare"};
-    if (train.terminusExceptionnel) return {code: "TERMINUS", label: "Terminus exceptionnel"};
-    if (eta === Infinity) return {code: "SUIVANT", label: "Suivant plus tard"};
-    if (eta <= 0) return {code: train.delay > 60 ? "RETARD" : "QUAI", label: train.delay > 60 ? "À quai (retard)" : "À quai"};
-    const min = eta / 60;
-    if (min <= 0.5) return {code: train.delay > 60 ? "RETARD" : "DEPART", label: train.delay > 60 ? "Départ (retard)" : "Départ imminent"};
-    if (min <= 1.5) return {code: "APPROCHE", label: "Approche imminente"};
-    if (min <= 5) return {code: train.delay > 60 ? "RETARD" : "OK", label: train.delay > 60 ? "Arrive (retard)" : "Arrive dans"};
-    return {code: "SUIVANT", label: "Suivant dans"};
-  }
-
-  function renderStationSelects() {
-    const stationSelect = document.getElementById("station-select");
-    const editPos = document.getElementById("edit-pos");
-    const addOrigin = document.getElementById("add-origin");
-    const addDest = document.getElementById("add-dest");
-    const addPos = document.getElementById("add-pos");
-    const trainFilterStation = document.getElementById("train-filter-station");
-
-    const options = STATIONS.map((s, i) => `<option value="${i}">${s}</option>`).join("");
-    stationSelect.innerHTML = options;
-    editPos.innerHTML = options;
-    addOrigin.innerHTML = options;
-    addDest.innerHTML = options;
-    addPos.innerHTML = options;
-    trainFilterStation.innerHTML = `<option value="-1">Toutes</option>` + options;
-
-    stationSelect.value = STATIONS.indexOf("Paris Austerlitz");
-  }
-
-  function filteredTrainsForSelect() {
-    const stationFilter = Number(document.getElementById("train-filter-station").value);
-    const dirFilter = Number(document.getElementById("train-filter-dir").value);
-    return trains
-      .filter(t => !t.deleted)
-      .filter(t => stationFilter === -1 || t.positionIndex === stationFilter)
-      .filter(t => dirFilter === 0 || t.direction === dirFilter)
-      .sort((a, b) => {
-        if (a.positionIndex !== b.positionIndex) return a.positionIndex - b.positionIndex;
-        return a.mission.localeCompare(b.mission);
-      });
-  }
-
-  function renderTrainSelect() {
-    const select = document.getElementById("train-select");
-    const list = filteredTrainsForSelect();
-    select.innerHTML = list.map(t => {
-      const posName = STATIONS[t.positionIndex] || "?";
-      const flags = [];
-      if (t.delay > 60) flags.push("RET");
-      if (t.deleteNext) flags.push("SUPP+1");
-      if (t.terminusExceptionnel) flags.push("TERM");
-      const flagStr = flags.length ? " [" + flags.join(",") + "]" : "";
-      return `<option value="${t.id}">${t.mission} — ${posName} (${t.direction === 1 ? "→ aval" : "← amont"})${flagStr}</option>`;
-    }).join("");
-    if (list.length > 0) {
-      loadSelectedTrain(list[0].id);
-    } else {
-      document.getElementById("edit-mission").value = "";
-      document.getElementById("edit-origin").value = "";
-      document.getElementById("edit-dest").value = "";
-    }
-  }
-
-  function getDirectionFilter() {
-    const all = document.getElementById("dir-all").classList.contains("active");
-    const up = document.getElementById("dir-up").classList.contains("active");
-    const down = document.getElementById("dir-down").classList.contains("active");
-    if (all || (!up && !down)) return 0;
-    if (up) return -1;
-    if (down) return 1;
-    return 0;
-  }
-
-  function renderBoard() {
-    const tbody = document.getElementById("board-body");
-    tbody.innerHTML = "";
-
-    const stationIndex = Number(document.getElementById("station-select").value);
-    const dirFilter = getDirectionFilter();
-
-    const enriched = trains
-      .filter(t => t.active || t.deleted || t.deleteNext || t.terminusExceptionnel)
-      .map(t => ({ train: t, eta: etaToStation(t, stationIndex) }))
-      .filter(e => dirFilter === 0 || e.train.direction === dirFilter)
-      .sort((a, b) => a.eta - b.eta)
-      .slice(0, 20);
-
-    enriched.forEach(e => {
-      const t = e.train;
-      const eta = e.eta;
-      const status = statusForTrain(t, eta);
-      const tr = document.createElement("tr");
-      tr.dataset.id = t.id;
-
-      const destName = STATIONS[t.destIndex] || "?";
-      const originName = STATIONS[t.originIndex] || "?";
-
-      tr.innerHTML = `
-        <td><span class="line-badge">C</span> ${t.mission}</td>
-        <td>${destName}</td>
-        <td>${originName}</td>
-        <td class="status status-${status.code}">${status.label}</td>
-        <td class="time">${formatEta(eta)}</td>
-      `;
-      tr.addEventListener("click", () => {
-        document.getElementById("train-select").value = t.id;
-        loadSelectedTrain(t.id);
-      });
-      tbody.appendChild(tr);
-    });
-
-    const statsEl = document.getElementById("stats");
-    const activeCount = trains.filter(t => t.active && !t.deleted).length;
-    const deletedCount = trains.filter(t => t.deleted).length;
-    statsEl.textContent = `${activeCount} trains actifs, ${deletedCount} supprimés — gare observée : ${STATIONS[stationIndex]}`;
-
-    document.getElementById("current-station-label").textContent = "Gare observée : " + STATIONS[stationIndex];
-    document.getElementById("board-subtitle").textContent = "Vue locale — " + STATIONS[stationIndex];
-
-    renderLineDiagram(stationIndex);
-  }
-
-  function renderLineDiagram(stationIndex) {
-    const el = document.getElementById("line-diagram");
-    el.innerHTML = STATIONS.map((s, i) => {
-      const cls = i === stationIndex ? "current" : "";
-      return `<span class="${cls}">${s}</span>`;
-    }).join("");
-  }
-
-  function renderPCC() {
-    const tbody = document.getElementById("pcc-body");
-    tbody.innerHTML = "";
-    trains.forEach(t => {
-      const flags = [];
-      if (t.delay > 60) flags.push("RETARD");
-      if (t.deleted) flags.push("SUPPRIMÉ");
-      if (t.deleteNext) flags.push("SUPP+1");
-      if (t.terminusExceptionnel) flags.push("TERMINUS EXC.");
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${t.id}</td>
-        <td>${t.mission}</td>
-        <td>${STATIONS[t.originIndex] || "?"}</td>
-        <td>${STATIONS[t.destIndex] || "?"}</td>
-        <td>${STATIONS[t.positionIndex] || "?"}</td>
-        <td>${(t.progress * 100).toFixed(0)}%</td>
-        <td>${t.offset.toFixed(0)} s</td>
-        <td>${t.dwellRemaining.toFixed(0)} s</td>
-        <td>${t.active ? "Oui" : "Non"}</td>
-        <td>${Math.round(t.delay / 60)} min</td>
-        <td>${flags.join(", ")}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-    document.getElementById("pcc-stats").textContent = `${trains.length} trains gérés — tick ${TICK_MS / 1000}s`;
-  }
-
-  function renderLineSchema() {
-    const container = document.getElementById("line-schema");
-    container.innerHTML = "";
-    STATIONS.forEach((s, i) => {
-      const row = document.createElement("div");
-      row.style.display = "flex";
-      row.style.alignItems = "center";
-      row.style.gap = "8px";
-
-      const label = document.createElement("div");
-      label.style.minWidth = "180px";
-      label.textContent = s;
-
-      const bar = document.createElement("div");
-      bar.style.flex = "1";
-      bar.style.height = "4px";
-      bar.style.background = "#22252b";
-      bar.style.position = "relative";
-      bar.style.borderRadius = "999px";
-
-      trains.forEach(t => {
-        if (!t.active || t.deleted) return;
-        if (t.positionIndex === i && t.progress === 0) {
-          const dot = document.createElement("div");
-          dot.style.position = "absolute";
-          dot.style.left = "50%";
-          dot.style.top = "-4px";
-          dot.style.width = "8px";
-          dot.style.height = "8px";
-          dot.style.borderRadius = "50%";
-          dot.style.background = t.delay > 60 ? "#ffb347" : "#f7d117";
-          bar.appendChild(dot);
-        } else {
-          const dir = t.direction;
-          const from = t.direction === 1 ? t.positionIndex : t.positionIndex - 1;
-          const to = from + dir;
-          if ((i === from || i === to) && t.progress > 0) {
-            const dot = document.createElement("div");
-            dot.style.position = "absolute";
-            const pos = i === from ? t.progress * 100 : (1 - t.progress) * 100;
-            dot.style.left = pos + "%";
-            dot.style.top = "-4px";
-            dot.style.width = "8px";
-            dot.style.height = "8px";
-            dot.style.borderRadius = "50%";
-            dot.style.background = t.delay > 60 ? "#ffb347" : "#f7d117";
-            bar.appendChild(dot);
-          }
-        }
-      });
-
-      row.appendChild(label);
-      row.appendChild(bar);
-      container.appendChild(row);
-    });
-  }
-
-  function loadSelectedTrain(id) {
-    const t = trains.find(tr => tr.id === Number(id));
-    if (!t) return;
-    document.getElementById("edit-mission").value = t.mission;
-    document.getElementById("edit-origin").value = STATIONS[t.originIndex] || "";
-    document.getElementById("edit-dest").value = STATIONS[t.destIndex] || "";
-    document.getElementById("edit-pos").value = t.positionIndex;
-    document.getElementById("edit-dir").value = t.direction;
-    document.getElementById("edit-dwell").value = t.dwellRemaining || DWELL_DEFAULT;
-  }
-
-  function scrollToSelected() {
-    const select = document.getElementById("train-select");
-    const id = Number(select.value);
-    const row = document.querySelector(`#board-body tr[data-id="${id}"]`);
-    if (row) {
-      row.scrollIntoView({behavior:"smooth", block:"center"});
-      row.classList.add("highlight");
-      setTimeout(() => row.classList.remove("highlight"), 1000);
-    }
-  }
-
-  function setupDirectionButtons() {
-    const btnAll = document.getElementById("dir-all");
-    const btnUp = document.getElementById("dir-up");
-    const btnDown = document.getElementById("dir-down");
-
-    btnAll.addEventListener("click", () => {
-      btnAll.classList.add("active");
-      btnUp.classList.remove("active");
-      btnDown.classList.remove("active");
-      renderBoard();
-    });
-    btnUp.addEventListener("click", () => {
-      btnAll.classList.remove("active");
-      btnUp.classList.add("active");
-      btnDown.classList.remove("active");
-      renderBoard();
-    });
-    btnDown.addEventListener("click", () => {
-      btnAll.classList.remove("active");
-      btnUp.classList.remove("active");
-      btnDown.classList.add("active");
-      renderBoard();
-    });
-  }
-
-  function applyEdit() {
-    const select = document.getElementById("train-select");
-    const id = Number(select.value);
-    const t = trains.find(tr => tr.id === id);
-    if (!t) return;
-
-    t.mission = document.getElementById("edit-mission").value || t.mission;
-
-    const originName = document.getElementById("edit-origin").value;
-    const destName = document.getElementById("edit-dest").value;
-    const originIndex = STATIONS.indexOf(originName);
-    const destIndex = STATIONS.indexOf(destName);
-    if (originIndex !== -1) t.originIndex = originIndex;
-    if (destIndex !== -1) t.destIndex = destIndex;
-
-    t.positionIndex = Number(document.getElementById("edit-pos").value);
-    t.direction = Number(document.getElementById("edit-dir").value);
-    t.dwellRemaining = Number(document.getElementById("edit-dwell").value) || 0;
-    t.progress = 0;
-    t.offset = 0;
-
-    logEvent("TRAIN", `Train ${t.mission} modifié (position ${STATIONS[t.positionIndex]}).`);
-
-    renderBoard();
-    renderTrainSelect();
-    renderPCC();
-    renderLineSchema();
-    document.getElementById("train-select").value = t.id;
-    loadSelectedTrain(t.id);
-  }
-
-  function forceDwell() {
-    const select = document.getElementById("train-select");
-    const id = Number(select.value);
-    const t = trains.find(tr => tr.id === id);
-    if (!t) return;
-    t.progress = 0;
-    t.dwellRemaining = Number(document.getElementById("edit-dwell").value) || DWELL_DEFAULT;
-    t.offset = 0;
-    logEvent("TRAIN", `Train ${t.mission} retenu à quai à ${STATIONS[t.positionIndex]}.`);
-    renderBoard();
-    renderPCC();
-    renderLineSchema();
-  }
-
-  function addTrain() {
-    const mission = document.getElementById("add-mission").value || ("C" + (lastId + 1));
-    const originIndex = Number(document.getElementById("add-origin").value);
-    const destIndex = Number(document.getElementById("add-dest").value);
-    const posIndex = Number(document.getElementById("add-pos").value);
-    const dir = Number(document.getElementById("add-dir").value);
-    const offsetMin = Number(document.getElementById("add-offset").value) || 0;
-
-    const t = createTrain({ mission, originIndex, destIndex, positionIndex: posIndex, direction: dir, offsetMinutes: offsetMin });
-    trains.push(t);
-    renderBoard();
-    renderTrainSelect();
-    renderPCC();
-    renderLineSchema();
-    document.getElementById("train-select").value = t.id;
-    loadSelectedTrain(t.id);
-  }
-
-  function removeSelectedTrain() {
-    const select = document.getElementById("train-select");
-    const id = Number(select.value);
-    const t = trains.find(tr => tr.id === id);
-    if (t) logEvent("TRAIN", `Train ${t.mission} retiré de la circulation (supprimé).`);
-    trains = trains.filter(tr => tr.id !== id);
-    renderBoard();
-    renderTrainSelect();
-    renderPCC();
-    renderLineSchema();
-  }
-
-  function addDelayToSelected(min) {
-    const select = document.getElementById("train-select");
-    const id = Number(select.value);
-    const t = trains.find(tr => tr.id === id);
-    if (!t) return;
-    t.delay += min * 60;
-    logEvent("TRAIN", `Train ${t.mission} retardé de ${min} min.`);
-    renderBoard();
-    renderPCC();
-    renderLineSchema();
-  }
-
-  function addCustomDelay() {
-    const min = Number(document.getElementById("delay-custom").value) || 0;
-    if (min <= 0) return;
-    addDelayToSelected(min);
-  }
-
-  function markTrainDelayedFlag() {
-    const select = document.getElementById("train-select");
-    const id = Number(select.value);
-    const t = trains.find(tr => tr.id === id);
-    if (!t) return;
-    if (t.delay < 60) t.delay = 60;
-    logEvent("TRAIN", `Train ${t.mission} marqué comme “RETARDÉ”.`);
-    renderBoard();
-    renderPCC();
-    renderLineSchema();
-  }
-
-  function markTrainDeletedImmediate() {
-    const select = document.getElementById("train-select");
-    const id = Number(select.value);
-    const t = trains.find(tr => tr.id === id);
-    if (!t) return;
-    t.deleted = true;
-    t.active = false;
-    t.dwellRemaining = 0;
-    t.progress = 0;
-    t.offset = 0;
-    logEvent("TRAIN", `Train ${t.mission} supprimé immédiatement.`);
-    renderBoard();
-    renderTrainSelect();
-    renderPCC();
-    renderLineSchema();
-  }
-
-  function markTrainDeleteNext() {
-    const select = document.getElementById("train-select");
-    const id = Number(select.value);
-    const t = trains.find(tr => tr.id === id);
-    if (!t) return;
-    t.deleteNext = true;
-    logEvent("TRAIN", `Train ${t.mission} sera supprimé à la prochaine gare.`);
-    renderBoard();
-    renderPCC();
-    renderLineSchema();
-  }
-
-  function markTrainTerminusExceptionnel() {
-    const select = document.getElementById("train-select");
-    const id = Number(select.value);
-    const t = trains.find(tr => tr.id === id);
-    if (!t) return;
-    t.destIndex = t.positionIndex;
-    t.terminusExceptionnel = true;
-    logEvent("TRAIN", `Train ${t.mission} mis en terminus exceptionnel à ${STATIONS[t.positionIndex]}.`);
-    renderBoard();
-    renderPCC();
-    renderLineSchema();
-  }
-
-  function restoreTrain() {
-    const select = document.getElementById("train-select");
-    const id = Number(select.value);
-    const t = trains.find(tr => tr.id === id);
-    if (!t) return;
-    t.deleted = false;
-    t.active = true;
-    t.deleteNext = false;
-    t.terminusExceptionnel = false;
-    logEvent("TRAIN", `Train ${t.mission} rétabli en circulation.`);
-    renderBoard();
-    renderTrainSelect();
-    renderPCC();
-    renderLineSchema();
-  }
-
-  function setPreset(mode) {
-    trains = generateInitialTrains(mode);
-    logEvent("TRAIN", `Preset de trafic appliqué : ${mode}.`);
-    renderBoard();
-    renderTrainSelect();
-    renderPCC();
-    renderLineSchema();
-  }
-
-  function clearAllTrains() {
-    trains = [];
-    logEvent("TRAIN", "Tous les trains ont été retirés de la circulation.");
-    renderBoard();
-    renderTrainSelect();
-    renderPCC();
-    renderLineSchema();
-  }
-
-  function tickSimulation() {
-    if (!simulationRunning) return;
-
-    trains.forEach(t => {
-      if (!t.active || t.deleted) return;
-
-      if (t.offset > 0) {
-        t.offset -= TICK_MS / 1000;
-        if (t.offset < 0) t.offset = 0;
-        return;
-      }
-
-      if (t.progress === 0 && t.dwellRemaining > 0) {
-        t.dwellRemaining -= TICK_MS / 1000;
-        if (t.dwellRemaining < 0) t.dwellRemaining = 0;
-        return;
-      }
-
-      if (t.progress === 0 && t.dwellRemaining <= 0) {
-        if ((t.direction === 1 && t.positionIndex >= t.destIndex) ||
-            (t.direction === -1 && t.positionIndex <= t.destIndex)) {
-          t.active = false;
-          logEvent("TRAIN", `Train ${t.mission} arrivé au terminus (${STATIONS[t.destIndex]}).`);
-          return;
-        }
-        t.progress = 0.01;
-        return;
-      }
-
-      if (t.progress > 0) {
-        const segmentTime = SEGMENT_MINUTES * 60;
-        const delta = (TICK_MS / 1000) / segmentTime;
-        t.progress += delta;
-        if (t.progress >= 1) {
-          t.positionIndex += t.direction;
-          t.progress = 0;
-          t.dwellRemaining = DWELL_DEFAULT;
-
-          if (t.deleteNext) {
-            t.deleted = true;
-            t.active = false;
-            t.dwellRemaining = 0;
-            logEvent("TRAIN", `Train ${t.mission} supprimé à ${STATIONS[t.positionIndex]} (suppression à la prochaine gare).`);
-          } else {
-            logEvent("TRAIN", `Train ${t.mission} arrivé à ${STATIONS[t.positionIndex]}.`);
-          }
-        }
-      }
-    });
-
-    trains = trains.filter(t => t.active || t.offset > 0 || t.dwellRemaining > 0 || t.deleted);
-
-    renderBoard();
-    renderPCC();
-    renderLineSchema();
-    renderTrainSelect();
-  }
-
-  function toggleSimulation() {
-    simulationRunning = !simulationRunning;
-    document.getElementById("sim-btn-label").textContent = simulationRunning ? "Pause" : "Reprendre";
-    logEvent("TRAIN", simulationRunning ? "Simulation reprise." : "Simulation mise en pause.");
-  }
-
-  function updateClock() {
-    const now = new Date();
-    document.getElementById("clock").textContent =
-      now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  }
-
-  function setupTabs() {
-    const buttons = document.querySelectorAll(".tab-btn");
-    const panels = {
-      voyageur: document.getElementById("panel-voyageur"),
-      pcc: document.getElementById("panel-pcc"),
-      ligne: document.getElementById("panel-ligne"),
-      messages: document.getElementById("panel-messages")
-    };
-
-    buttons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        buttons.forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        const tab = btn.dataset.tab;
-        Object.keys(panels).forEach(k => panels[k].classList.add("hidden"));
-        panels[tab].classList.remove("hidden");
-        if (tab === "pcc") renderPCC();
-        if (tab === "ligne") renderLineSchema();
-      });
-    });
-  }
-
-  function applyCustomMessage() {
-    const type = document.getElementById("msg-type").value;
-    const scope = document.getElementById("msg-scope").value;
-    const text = document.getElementById("msg-text").value.trim() || "Message régulateur sans contenu.";
-    bannerState.text = text;
-    bannerState.type = type;
-    bannerState.tag = scope === "global" ? "Régulateur ligne C" : "Régulateur gare observée";
-    updateBanner();
-    logEvent("MSG", `Message personnalisé appliqué : ${text}`);
-  }
-
-  function clearCustomMessage() {
-    bannerState = { type: "normal", text: "Trafic normal sur l’ensemble de la ligne.", tag: "Régulateur" };
-    updateBanner();
-    logEvent("MSG", "Retour au message de trafic normal.");
-  }
-
-  function updateBanner() {
-    const banner = document.getElementById("info-banner");
-    const textEl = document.getElementById("info-banner-text");
-    const tagEl = document.getElementById("info-banner-tag");
-    textEl.textContent = bannerState.text;
-    tagEl.textContent = bannerState.tag;
-
-    banner.classList.remove("info-banner-normal", "info-banner-perturbed", "info-banner-incident");
-    if (bannerState.type === "normal") banner.classList.add("info-banner-normal");
-    else if (bannerState.type === "warning") banner.classList.add("info-banner-perturbed");
-    else banner.classList.add("info-banner-incident");
-
-    document.getElementById("msg-preview").textContent = bannerState.text;
-  }
-
-  function triggerPresetIncident(kind) {
-    if (kind === "retard") {
-      trains.forEach(t => { t.delay += 3 * 60; });
-      bannerState = {
-        type: "warning",
-        text: "Retards importants sur l’ensemble de la ligne en raison d’un train en panne.",
-        tag: "Régulateur"
-      };
-      logEvent("INCIDENT", "Retards importants appliqués sur l’ensemble de la ligne.");
-    } else if (kind === "accident") {
-      bannerState = {
-        type: "incident",
-        text: "Accident voyageur à Bibliothèque François Mitterrand. Trafic interrompu entre Paris Austerlitz et Juvisy.",
-        tag: "Régulateur"
-      };
-      trains.forEach(t => {
-        const idx = STATIONS.indexOf("Bibliothèque François Mitterrand");
-        if (t.positionIndex === idx || t.positionIndex === idx - 1 || t.positionIndex === idx + 1) {
-          t.dwellRemaining += 180;
-        }
-      });
-      logEvent("INCIDENT", "Accident voyageur simulé à Bibliothèque François Mitterrand.");
-    } else if (kind === "signalisation") {
-      bannerState = {
-        type: "incident",
-        text: "Panne de signalisation à Juvisy. Forts retards et suppressions possibles.",
-        tag: "Régulateur"
-      };
-      trains.forEach(t => {
-        const idx = STATIONS.indexOf("Juvisy");
-        if (t.positionIndex === idx) t.dwellRemaining += 240;
-      });
-      logEvent("INCIDENT", "Panne de signalisation simulée à Juvisy.");
-    } else if (kind === "obstacle") {
-      bannerState = {
-        type: "incident",
-        text: "Obstacle sur les voies entre Choisy-le-Roi et Juvisy. Trafic très perturbé.",
-        tag: "Régulateur"
-      };
-      trains.forEach(t => {
-        const idx1 = STATIONS.indexOf("Choisy-le-Roi");
-        const idx2 = STATIONS.indexOf("Juvisy");
-        if ((t.positionIndex === idx1 || t.positionIndex === idx2) && t.progress > 0) {
-          t.progress = 0;
-          t.dwellRemaining += 300;
-        }
-      });
-      logEvent("INCIDENT", "Obstacle sur les voies simulé entre Choisy-le-Roi et Juvisy.");
-    }
-    updateBanner();
-    renderBoard();
-    renderPCC();
-  }
-
-  function setupMessagePreview() {
-    const textarea = document.getElementById("msg-text");
-    textarea.addEventListener("input", () => {
-      const text = textarea.value.trim() || "Trafic normal sur l’ensemble de la ligne.";
-      document.getElementById("msg-preview").textContent = text;
-    });
-  }
-
-  function init() {
-    renderStationSelects();
-    trains = generateInitialTrains("NORMAL");
-    renderBoard();
-    renderTrainSelect();
-    renderPCC();
-    renderLineSchema();
-    setupDirectionButtons();
-    setupTabs();
-    setupMessagePreview();
-    updateBanner();
-    updateClock();
-    setInterval(updateClock, 1000);
-    setInterval(tickSimulation, TICK_MS);
-
-    document.getElementById("station-select").addEventListener("change", renderBoard);
-    document.getElementById("train-select").addEventListener("change", e => loadSelectedTrain(e.target.value));
-    document.getElementById("train-filter-station").addEventListener("change", () => {
-      renderTrainSelect();
-    });
-    document.getElementById("train-filter-dir").addEventListener("change", () => {
-      renderTrainSelect();
-    });
-  }
-
-  init();
 </script>
+
 </body>
 </html>
 
