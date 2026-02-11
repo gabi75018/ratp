@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Pannel de Secours - Simulation</title>
+<title>Panel d'événements - Simulation</title>
 <style>
     body {
         margin: 0;
@@ -37,7 +37,7 @@
     .column:last-child {
         border-right: none;
     }
-    .call-card {
+    .card {
         background: #2a2a2a;
         padding: 10px;
         margin-bottom: 10px;
@@ -102,31 +102,38 @@
     .prio-P2 { background:#999900; }
     .prio-P3 { background:#555555; }
 </style>
+
+<!-- Sons par priorité -->
+<audio id="soundP0" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"></audio>
+<audio id="soundP1" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+<audio id="soundP2" src="https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"></audio>
+<audio id="soundP3" src="https://actions.google.com/sounds/v1/cartoon/pop.ogg"></audio>
+
 </head>
 <body>
 
 <header>
-    <h2>Centre de Traitement des Appels d'Urgence – Simulation</h2>
+    <h2>Panel d'événements – Simulation</h2>
     <div id="stats"></div>
 </header>
 
 <div class="container">
 
-    <!-- FILE D'APPELS -->
-    <div class="column" id="queue">
-        <div class="section-title">📞 Appels entrants</div>
+    <!-- FILE D'ÉVÉNEMENTS -->
+    <div class="column">
+        <div class="section-title">📥 Événements entrants</div>
         <div id="queue-list"></div>
     </div>
 
-    <!-- APPEL ACTIF / DOSSIER -->
-    <div class="column" id="active">
-        <div class="section-title">🎧 Dossier en cours</div>
-        <div id="active-call">Aucun appel sélectionné.</div>
+    <!-- ÉVÉNEMENT ACTIF / DOSSIER -->
+    <div class="column">
+        <div class="section-title">📂 Dossier en cours</div>
+        <div id="active-event">Aucun événement sélectionné.</div>
     </div>
 
-    <!-- ACTIONS + HISTORIQUE -->
+    <!-- DOSSIERS ENVOYÉS + HISTORIQUE -->
     <div class="column">
-        <div class="section-title">🚨 Dossiers envoyés</div>
+        <div class="section-title">🚀 Dossiers envoyés</div>
         <div id="actions"></div>
 
         <div class="section-title" style="margin-top:20px;">📚 Historique</div>
@@ -137,7 +144,7 @@
 
 <script>
 /* ------------------------------
-   SCÉNARIOS DÉTAILLÉS
+   SCÉNARIOS NEUTRES
 --------------------------------*/
 const SCENARIOS = [
     {label:"Arrêt cardio-respiratoire", type:"Médical", prio:"P0", desc:"Victime inconsciente, respiration absente.", victims:1, env:"Domicile"},
@@ -169,179 +176,170 @@ const SCENARIOS = [
    VARIABLES
 --------------------------------*/
 let queue = [];
-let activeCall = null;
+let activeEvent = null;
 let actions = [];
 let history = [];
-let callID = 1;
+let eventID = 1;
 
 /* ------------------------------
-   GENERATEUR D'APPELS
+   SONS PAR PRIORITÉ
 --------------------------------*/
-function generateCall() {
+function playPrioritySound(prio) {
+    const audio = document.getElementById("sound" + prio);
+    if (audio) {
+        // certains navigateurs exigent une interaction avant le son
+        audio.currentTime = 0;
+        audio.play().catch(()=>{});
+    }
+}
+
+/* ------------------------------
+   GÉNÉRATION D'ÉVÉNEMENTS
+--------------------------------*/
+function generateEvent() {
     const s = SCENARIOS[Math.floor(Math.random()*SCENARIOS.length)];
-    const call = {
-        id: callID++,
+    const ev = {
+        id: eventID++,
         scenario: s,
         time: new Date().toLocaleTimeString(),
         location: randomLocation(),
         comments: [],
         services: [],
         dossierSent: false,
-        // Champs libres
+        // champs libres
         freeDesc: "",
         gravity: s.prio,
         env: s.env,
-        alcoholDrugs: "Inconnu",
-        weaponPresent: "Inconnu",
-        childrenInvolved: "Inconnu",
-        suspectedHoax: "Non",
-        dangerOngoing: "Inconnu",
-        safetyForRescuers: "Inconnu"
+        tag: "",
+        impactScope: "Inconnu",
+        userAffected: "Inconnu",
+        workaround: "Inconnu"
     };
-    queue.push(call);
+    queue.push(ev);
     renderQueue();
+    playPrioritySound(s.prio);
 }
 
 function randomLocation() {
-    const streets = ["Rue Victor Hugo","Avenue de Paris","Boulevard des Lilas","Rue du Port","Chemin des Vignes","Rue de la Gare","Place République"];
-    const cities = ["Paris","Lyon","Marseille","Toulouse","Lille","Nantes","Bordeaux"];
-    return streets[Math.floor(Math.random()*streets.length)] + " " + (Math.floor(Math.random()*120)+1) + ", " + cities[Math.floor(Math.random()*cities.length)];
+    const zones = ["Zone A", "Zone B", "Zone C", "Cluster 1", "Cluster 2", "Segment X", "Segment Y"];
+    return zones[Math.floor(Math.random()*zones.length)];
 }
 
 /* ------------------------------
-   AFFICHAGE FILE D'APPELS
+   AFFICHAGE FILE
 --------------------------------*/
 function renderQueue() {
     const div = document.getElementById("queue-list");
     div.innerHTML = "";
-    queue.forEach(call => {
+    queue.forEach(ev => {
         div.innerHTML += `
-            <div class="call-card">
-                <b>#${call.id}</b> – ${call.scenario.label}<br>
-                <span class="badge prio-${call.scenario.prio}">${call.scenario.prio}</span>
-                <span class="small-label">${call.scenario.type}</span><br>
-                ${call.location}<br>
-                <span class="small-label">Reçu à ${call.time}</span><br>
-                <button class="btn" onclick="takeCall(${call.id})">Prendre en charge</button>
+            <div class="card">
+                <b>#${ev.id}</b> – ${ev.scenario.label}<br>
+                <span class="badge prio-${ev.scenario.prio}">${ev.scenario.prio}</span>
+                <span class="small-label">${ev.scenario.type}</span><br>
+                ${ev.location}<br>
+                <span class="small-label">Reçu à ${ev.time}</span><br>
+                <button class="btn" onclick="takeEvent(${ev.id})">Prendre en charge</button>
             </div>
         `;
     });
 }
 
 /* ------------------------------
-   PRENDRE UN APPEL
+   PRENDRE UN ÉVÉNEMENT
 --------------------------------*/
-function takeCall(id) {
-    activeCall = queue.find(c => c.id === id);
-    queue = queue.filter(c => c.id !== id);
+function takeEvent(id) {
+    activeEvent = queue.find(e => e.id === id);
+    queue = queue.filter(e => e.id !== id);
     renderQueue();
-    renderActiveCall();
+    renderActiveEvent();
 }
 
 /* ------------------------------
    AFFICHAGE DOSSIER
 --------------------------------*/
-function renderActiveCall() {
-    if (!activeCall) {
-        document.getElementById("active-call").innerHTML = "Aucun appel sélectionné.";
+function renderActiveEvent() {
+    if (!activeEvent) {
+        document.getElementById("active-event").innerHTML = "Aucun événement sélectionné.";
         return;
     }
 
-    const c = activeCall;
+    const e = activeEvent;
 
-    document.getElementById("active-call").innerHTML = `
-        <div class="call-card">
-            <h3>Dossier #${c.id} ${c.dossierSent ? "(envoyé – modifiable)" : "(à compléter)"}</h3>
-            <div class="small-label">Reçu à ${c.time} – ${c.location}</div>
-            <b>${c.scenario.label}</b><br>
-            Type : ${c.scenario.type} – 
-            <span class="badge prio-${c.scenario.prio}">${c.scenario.prio}</span><br>
-            Victimes estimées : ${c.scenario.victims}<br>
-            <p>${c.scenario.desc}</p>
+    document.getElementById("active-event").innerHTML = `
+        <div class="card">
+            <h3>Dossier #${e.id} ${e.dossierSent ? "(envoyé – modifiable)" : "(à compléter)"}</h3>
+            <div class="small-label">Reçu à ${e.time} – ${e.location}</div>
+            <b>${e.scenario.label}</b><br>
+            Type : ${e.scenario.type} – 
+            <span class="badge prio-${e.scenario.prio}">${e.scenario.prio}</span><br>
+            <p>${e.scenario.desc}</p>
 
             <h4>Description libre</h4>
-            <textarea id="freeDesc">${c.freeDesc}</textarea>
+            <textarea id="freeDesc">${e.freeDesc}</textarea>
 
             <h4>Évaluation</h4>
             <div class="row">
                 <div>
                     <label class="small-label">Gravité</label>
                     <select id="gravity">
-                        ${["P0","P1","P2","P3"].map(p=>`<option value="${p}" ${c.gravity===p?"selected":""}>${p}</option>`).join("")}
+                        ${["P0","P1","P2","P3"].map(p=>`<option value="${p}" ${e.gravity===p?"selected":""}>${p}</option>`).join("")}
                     </select>
                 </div>
                 <div>
                     <label class="small-label">Environnement</label>
                     <select id="env">
-                        ${["Domicile","Immeuble","Voie publique","Route","Parc","Transport","Zone industrielle","Lieu public","Chantier","Inconnu"].map(e=>`<option value="${e}" ${c.env===e?"selected":""}>${e}</option>`).join("")}
+                        ${["Datacenter","Production","Test","Client","Bureau","Réseau","Sécurité","Inconnu"].map(v=>`<option value="${v}" ${e.env===v?"selected":""}>${v}</option>`).join("")}
                     </select>
                 </div>
             </div>
 
             <div class="row">
                 <div>
-                    <label class="small-label">Alcool / Drogues</label>
-                    <select id="alcoholDrugs">
-                        ${["Inconnu","Oui suspecté","Non"].map(v=>`<option value="${v}" ${c.alcoholDrugs===v?"selected":""}>${v}</option>`).join("")}
+                    <label class="small-label">Portée de l'impact</label>
+                    <select id="impactScope">
+                        ${["Inconnu","Localisé","Étendu","Global"].map(v=>`<option value="${v}" ${e.impactScope===v?"selected":""}>${v}</option>`).join("")}
                     </select>
                 </div>
                 <div>
-                    <label class="small-label">Arme présente</label>
-                    <select id="weaponPresent">
-                        ${["Inconnu","Oui","Non"].map(v=>`<option value="${v}" ${c.weaponPresent===v?"selected":""}>${v}</option>`).join("")}
+                    <label class="small-label">Utilisateurs affectés</label>
+                    <select id="userAffected">
+                        ${["Inconnu","Peu","Beaucoup","Critique"].map(v=>`<option value="${v}" ${e.userAffected===v?"selected":""}>${v}</option>`).join("")}
                     </select>
                 </div>
             </div>
 
             <div class="row">
                 <div>
-                    <label class="small-label">Enfants impliqués</label>
-                    <select id="childrenInvolved">
-                        ${["Inconnu","Oui","Non"].map(v=>`<option value="${v}" ${c.childrenInvolved===v?"selected":""}>${v}</option>`).join("")}
+                    <label class="small-label">Contournement possible</label>
+                    <select id="workaround">
+                        ${["Inconnu","Oui","Non"].map(v=>`<option value="${v}" ${e.workaround===v?"selected":""}>${v}</option>`).join("")}
                     </select>
                 </div>
                 <div>
-                    <label class="small-label">Canular suspecté</label>
-                    <select id="suspectedHoax">
-                        ${["Non","Oui"].map(v=>`<option value="${v}" ${c.suspectedHoax===v?"selected":""}>${v}</option>`).join("")}
-                    </select>
+                    <label class="small-label">Tag / catégorie libre</label>
+                    <input id="tag" value="${e.tag}">
                 </div>
             </div>
 
-            <div class="row">
-                <div>
-                    <label class="small-label">Danger persistant</label>
-                    <select id="dangerOngoing">
-                        ${["Inconnu","Oui","Non"].map(v=>`<option value="${v}" ${c.dangerOngoing===v?"selected":""}>${v}</option>`).join("")}
-                    </select>
-                </div>
-                <div>
-                    <label class="small-label">Sécurité des secours</label>
-                    <select id="safetyForRescuers">
-                        ${["Inconnu","OK","Risque"].map(v=>`<option value="${v}" ${c.safetyForRescuers===v?"selected":""}>${v}</option>`).join("")}
-                    </select>
-                </div>
-            </div>
-
-            <h4>Commentaires opérateur</h4>
+            <h4>Commentaires</h4>
             <textarea id="comment"></textarea>
             <button class="btn" onclick="addComment()">Ajouter commentaire</button>
-            <div id="comment-list">${c.comments.map(cm=>"<div>• "+cm+"</div>").join("")}</div>
+            <div id="comment-list">${e.comments.map(cm=>"<div>• "+cm+"</div>").join("")}</div>
 
-            <h4>Services à engager</h4>
-            ${serviceButton("SAMU")}
-            ${serviceButton("Pompiers")}
-            ${serviceButton("Police")}
-            ${serviceButton("Gendarmerie")}
-            ${serviceButton("SMUR")}
-            ${serviceButton("Hélico")}
-            ${serviceButton("DOC")}
-            ${serviceButton("Douanes")}
+            <h4>Actions / Services</h4>
+            ${serviceButton("Équipe N1")}
+            ${serviceButton("Équipe N2")}
+            ${serviceButton("Supervision")}
+            ${serviceButton("Réseau")}
+            ${serviceButton("Sécurité")}
+            ${serviceButton("Support client")}
+            ${serviceButton("Change manager")}
 
             <h4>Validation</h4>
             <button class="btn" onclick="saveCoreFields()">💾 Sauvegarder</button>
             <button class="btn" onclick="sendDossier()">📤 Envoyer dossier</button>
-            <button class="btn" onclick="closeCall()">✅ Clôturer</button>
+            <button class="btn" onclick="closeEvent()">✅ Clôturer</button>
         </div>
     `;
 }
@@ -354,48 +352,125 @@ function serviceButton(name) {
    SAUVEGARDE
 --------------------------------*/
 function saveCoreFields() {
-    if (!activeCall) return;
-    const c = activeCall;
-    c.freeDesc = document.getElementById("freeDesc").value;
-    c.gravity = document.getElementById("gravity").value;
-    c.env = document.getElementById("env").value;
-    c.alcoholDrugs = document.getElementById("alcoholDrugs").value;
-    c.weaponPresent = document.getElementById("weaponPresent").value;
-    c.childrenInvolved = document.getElementById("childrenInvolved").value;
-    c.suspectedHoax = document.getElementById("suspectedHoax").value;
-    c.dangerOngoing = document.getElementById("dangerOngoing").value;
-    c.safetyForRescuers = document.getElementById("safetyForRescuers").value;
+    if (!activeEvent) return;
+    const e = activeEvent;
+    e.freeDesc = document.getElementById("freeDesc").value;
+    e.gravity = document.getElementById("gravity").value;
+    e.env = document.getElementById("env").value;
+    e.impactScope = document.getElementById("impactScope").value;
+    e.userAffected = document.getElementById("userAffected").value;
+    e.workaround = document.getElementById("workaround").value;
+    e.tag = document.getElementById("tag").value;
 }
 
 /* ------------------------------
    ENVOI DU DOSSIER
 --------------------------------*/
 function sendDossier() {
-    if (!activeCall) return;
+    if (!activeEvent) return;
     saveCoreFields();
-    activeCall.dossierSent = true;
+    activeEvent.dossierSent = true;
 
-    const existing = actions.find(a => a.id === activeCall.id);
+    const existing = actions.find(a => a.id === activeEvent.id);
     if (!existing) {
         actions.push({
-            id: activeCall.id,
-            label: activeCall.scenario.label,
+            id: activeEvent.id,
+            label: activeEvent.scenario.label,
             time: new Date().toLocaleTimeString(),
-            services: [...activeCall.services]
+            services: [...activeEvent.services]
         });
+    } else {
+        existing.services = [...activeEvent.services];
     }
     renderActions();
-    renderActiveCall();
+    renderActiveEvent();
 }
 
 /* ------------------------------
    COMMENTAIRES
 --------------------------------*/
 function addComment() {
-    if (!activeCall) return;
+    if (!activeEvent) return;
     const txt = document.getElementById("comment").value.trim();
     if (!txt) return;
-    activeCall.comments.push(txt);
+    activeEvent.comments.push(txt);
     document.getElementById("comment").value = "";
-    renderActiveCall
+    renderActiveEvent();
+}
 
+/* ------------------------------
+   SERVICES
+--------------------------------*/
+function sendService(s) {
+    if (!activeEvent) return;
+    activeEvent.services.push(s);
+
+    if (activeEvent.dossierSent) {
+        const a = actions.find(a => a.id === activeEvent.id);
+        if (a) a.services = [...activeEvent.services];
+        else actions.push({
+            id: activeEvent.id,
+            label: activeEvent.scenario.label,
+            time: new Date().toLocaleTimeString(),
+            services: [...activeEvent.services]
+        });
+        renderActions();
+    }
+    renderActiveEvent();
+}
+
+function renderActions() {
+    const div = document.getElementById("actions");
+    div.innerHTML = actions.map(a => `
+        <div class="card">
+            <b>Dossier #${a.id}</b> – ${a.label}<br>
+            <span class="small-label">Envoyé à ${a.time}</span><br>
+            Services engagés : ${a.services.length ? a.services.join(", ") : "Aucun"}
+        </div>
+    `).join("");
+}
+
+/* ------------------------------
+   CLÔTURE
+--------------------------------*/
+function closeEvent() {
+    if (!activeEvent) return;
+    history.push(activeEvent);
+    actions = actions.filter(a => a.id !== activeEvent.id);
+    activeEvent = null;
+    renderActiveEvent();
+    renderActions();
+    renderHistory();
+}
+
+function renderHistory() {
+    const div = document.getElementById("history");
+    div.innerHTML = history.map(h => `
+        <div class="card">
+            <b>#${h.id}</b> – ${h.scenario.label}<br>
+            Gravité : ${h.gravity} – Environnement : ${h.env}<br>
+            Portée : ${h.impactScope} – Utilisateurs : ${h.userAffected}<br>
+            Services : ${h.services.join(", ") || "Aucun"}<br>
+            Commentaires : ${h.comments.length}<br>
+            Tag : ${h.tag || "N/A"}
+        </div>
+    `).join("");
+}
+
+/* ------------------------------
+   STATISTIQUES
+--------------------------------*/
+setInterval(() => {
+    document.getElementById("stats").innerHTML =
+        `En attente: ${queue.length} | En cours: ${activeEvent ? "#"+activeEvent.id : "aucun"} | Envoyés: ${actions.length} | Historique: ${history.length}`;
+}, 500);
+
+/* ------------------------------
+   GÉNÉRATION RÉGULIÈRE
+--------------------------------*/
+setInterval(() => generateEvent(), 5000 + Math.random()*4000); // 5–9s
+
+</script>
+
+</body>
+</html>
