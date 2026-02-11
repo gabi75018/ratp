@@ -386,6 +386,7 @@ function renderActiveEvent() {
             ${serviceButton("Pompiers")}
             ${serviceButton("Samu")}
             ${serviceButton("SOS Medecin")}
+            ${serviceButton("Techniciens")}
             ${serviceButton("Mairie de Paris")}
             ${serviceButton("Sans intervention")}
 
@@ -521,7 +522,7 @@ setInterval(() => {
 /* ------------------------------
    GÉNÉRATION RÉGULIÈRE
 --------------------------------*/
-setInterval(() => generateEvent(), 15000 + Math.random()*15000);
+setInterval(() => generateEvent(), 2000 + Math.random()*1000);
 
 
 </script>
