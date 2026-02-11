@@ -126,7 +126,7 @@
 
     <!-- ACTIONS + HISTORIQUE -->
     <div class="column">
-        <div class="section-title">🚨 Actions / Dossiers envoyés</div>
+        <div class="section-title">🚨 Dossiers envoyés</div>
         <div id="actions"></div>
 
         <div class="section-title" style="margin-top:20px;">📚 Historique</div>
@@ -140,26 +140,29 @@
    SCÉNARIOS DÉTAILLÉS
 --------------------------------*/
 const SCENARIOS = [
-    {label:"Arrêt cardio-respiratoire domicile", type:"Médical", prio:"P0", desc:"Victime inconsciente, ne respire plus, à domicile. Appelant très paniqué.", victims:1, env:"Domicile"},
-    {label:"Feu d'appartement avec personnes coincées", type:"Incendie", prio:"P0", desc:"Fumée noire, cris à l'intérieur, possible propagation aux étages supérieurs.", victims:2, env:"Immeuble"},
-    {label:"Accident route – choc frontal", type:"Accident", prio:"P1", desc:"Deux véhicules, un conducteur coincé, airbags déclenchés, circulation bloquée.", victims:1, env:"Route"},
-    {label:"Agression au couteau devant un bar", type:"Agression", prio:"P0", desc:"Victime au sol, saignement abondant, agresseur en fuite, foule autour.", victims:1, env:"Voie publique"},
-    {label:"Vieil homme désorienté dans un parc", type:"Médical", prio:"P2", desc:"Ne sait plus où il habite, météo froide, marche difficile.", victims:1, env:"Parc"},
-    {label:"Odeur de gaz cage d'escalier", type:"Risque", prio:"P1", desc:"Odeur forte au 3e étage, voisins inquiets, pas de flamme visible.", victims:0, env:"Immeuble"},
-    {label:"Appel bizarre: parle d'OVNI sur le toit", type:"Bizarre", prio:"P3", desc:"Personne dit qu'un vaisseau l'observe, discours décousu, refuse de donner son nom.", victims:0, env:"Immeuble"},
-    {label:"Enfant qui rigole et raccroche", type:"Douteux", prio:"P3", desc:"Voix d'enfant, bruits de fond TV, aucun détail donné.", victims:0, env:"Domicile"},
-    {label:"Tentative de suicide sur pont", type:"Critique", prio:"P0", desc:"Personne sur le rebord, pleure, parle de tout arrêter.", victims:1, env:"Pont"},
-    {label:"Gros malaise dans le métro", type:"Médical", prio:"P1", desc:"Victime au sol, respiration difficile, rame à quai, foule dense.", victims:1, env:"Transport"},
-    {label:"Voisin hurle qu'il est un poulet", type:"Bizarre", prio:"P3", desc:"Crie depuis 20 minutes, bruits de casseroles, possible trouble psy.", victims:0, env:"Immeuble"},
-    {label:"Course poursuite scooter avec casque", type:"Police", prio:"P1", desc:"Scooter à vive allure, zigzague entre voitures, refuse de s'arrêter.", victims:0, env:"Route"},
-    {label:"Trafic suspect près d'un entrepôt", type:"Douanes", prio:"P2", desc:"Camionnettes qui chargent/déchargent de nuit, plaques étrangères.", victims:0, env:"Zone industrielle"},
-    {label:"Bagarre générale devant une boîte de nuit", type:"Agression", prio:"P1", desc:"Plusieurs personnes impliquées, bouteilles cassées, cris, possible blessés.", victims:2, env:"Voie publique"},
-    {label:"Chute grave d'un toit", type:"Accident", prio:"P0", desc:"Personne tombée de plusieurs mètres, inconsciente, saignement tête.", victims:1, env:"Chantier"},
-    {label:"Crise d'épilepsie dans un supermarché", type:"Médical", prio:"P1", desc:"Convulsions en cours, sol dur, foule autour, pas de médecin sur place.", victims:1, env:"Lieu public"},
-    {label:"Personne enfermée dans ascenseur", type:"Risque", prio:"P2", desc:"Bloqué depuis 20 minutes, commence à paniquer, pas de blessure.", victims:1, env:"Immeuble"},
-    {label:"Appel très confus, parle de complot", type:"Bizarre", prio:"P3", desc:"Parle de caméras cachées, refuse de donner localisation exacte.", victims:0, env:"Inconnu"},
-    {label:"Violences conjugales suspectées", type:"Police", prio:"P1", desc:"Voisin entend des cris, bruits de coups, enfants qui pleurent.", victims:1, env:"Domicile"},
-    {label:"Intoxication alcool + chute", type:"Médical", prio:"P2", desc:"Personne très alcoolisée, chute dans escalier, plaie à la tête.", victims:1, env:"Domicile"}
+    {label:"Arrêt cardio-respiratoire", type:"Médical", prio:"P0", desc:"Victime inconsciente, respiration absente.", victims:1, env:"Domicile"},
+    {label:"Feu d'appartement", type:"Incendie", prio:"P0", desc:"Fumée noire, personnes coincées.", victims:2, env:"Immeuble"},
+    {label:"Accident frontal", type:"Accident", prio:"P1", desc:"Deux voitures, un coincé.", victims:1, env:"Route"},
+    {label:"Agression couteau", type:"Agression", prio:"P0", desc:"Victime poignardée, saigne abondamment.", victims:1, env:"Voie publique"},
+    {label:"Vieil homme perdu", type:"Médical", prio:"P2", desc:"Confusion, marche instable.", victims:1, env:"Parc"},
+    {label:"Odeur de gaz", type:"Risque", prio:"P1", desc:"Odeur forte dans immeuble.", victims:0, env:"Immeuble"},
+    {label:"OVNI sur le toit", type:"Bizarre", prio:"P3", desc:"Personne dit être observée.", victims:0, env:"Immeuble"},
+    {label:"Enfant qui rigole", type:"Douteux", prio:"P3", desc:"Probable canular.", victims:0, env:"Domicile"},
+    {label:"Suicide pont", type:"Critique", prio:"P0", desc:"Personne sur rebord.", victims:1, env:"Pont"},
+    {label:"Malaise métro", type:"Médical", prio:"P1", desc:"Victime au sol, respiration difficile.", victims:1, env:"Transport"},
+    {label:"Voisin se prend pour un poulet", type:"Bizarre", prio:"P3", desc:"Crie depuis 20 minutes.", victims:0, env:"Immeuble"},
+    {label:"Course poursuite scooter", type:"Police", prio:"P1", desc:"Scooter refuse d'obtempérer.", victims:0, env:"Route"},
+    {label:"Trafic suspect", type:"Douanes", prio:"P2", desc:"Chargements nocturnes suspects.", victims:0, env:"Zone industrielle"},
+    {label:"Bagarre générale", type:"Agression", prio:"P1", desc:"Plusieurs blessés possibles.", victims:2, env:"Voie publique"},
+    {label:"Chute d'un toit", type:"Accident", prio:"P0", desc:"Victime inconsciente.", victims:1, env:"Chantier"},
+    {label:"Crise d'épilepsie", type:"Médical", prio:"P1", desc:"Convulsions en cours.", victims:1, env:"Lieu public"},
+    {label:"Ascenseur bloqué", type:"Risque", prio:"P2", desc:"Personne enfermée, panique.", victims:1, env:"Immeuble"},
+    {label:"Complot imaginaire", type:"Bizarre", prio:"P3", desc:"Parle de caméras cachées.", victims:0, env:"Inconnu"},
+    {label:"Violences conjugales", type:"Police", prio:"P1", desc:"Cris, bruits de coups.", victims:1, env:"Domicile"},
+    {label:"Intox alcool + chute", type:"Médical", prio:"P2", desc:"Plaie tête, alcoolisé.", victims:1, env:"Domicile"},
+    {label:"Explosion entendue", type:"Risque", prio:"P1", desc:"Détonation forte, fumée.", victims:0, env:"Rue"},
+    {label:"Cri animal étrange", type:"Bizarre", prio:"P3", desc:"Appelant parle d'un monstre.", victims:0, env:"Forêt"},
+    {label:"Fuite chimique", type:"Risque", prio:"P0", desc:"Odeur piquante, irritation yeux.", victims:1, env:"Usine"}
 ];
 
 /* ------------------------------
@@ -183,11 +186,8 @@ function generateCall() {
         location: randomLocation(),
         comments: [],
         services: [],
-        status: "En attente",
         dossierSent: false,
-        // champs dossier
-        callerName: "",
-        callerPhone: "",
+        // Champs libres
         freeDesc: "",
         gravity: s.prio,
         env: s.env,
@@ -203,8 +203,8 @@ function generateCall() {
 }
 
 function randomLocation() {
-    const streets = ["Rue Victor Hugo", "Avenue de Paris", "Boulevard des Lilas", "Rue du Port", "Chemin des Vignes", "Rue de la Gare", "Place de la République"];
-    const cities = ["Paris", "Lyon", "Marseille", "Toulouse", "Lille", "Nantes", "Bordeaux"];
+    const streets = ["Rue Victor Hugo","Avenue de Paris","Boulevard des Lilas","Rue du Port","Chemin des Vignes","Rue de la Gare","Place République"];
+    const cities = ["Paris","Lyon","Marseille","Toulouse","Lille","Nantes","Bordeaux"];
     return streets[Math.floor(Math.random()*streets.length)] + " " + (Math.floor(Math.random()*120)+1) + ", " + cities[Math.floor(Math.random()*cities.length)];
 }
 
@@ -239,7 +239,7 @@ function takeCall(id) {
 }
 
 /* ------------------------------
-   AFFICHAGE APPEL / DOSSIER ACTIF
+   AFFICHAGE DOSSIER
 --------------------------------*/
 function renderActiveCall() {
     if (!activeCall) {
@@ -248,7 +248,6 @@ function renderActiveCall() {
     }
 
     const c = activeCall;
-    const disabledCore = c.dossierSent ? "disabled" : "";
 
     document.getElementById("active-call").innerHTML = `
         <div class="call-card">
@@ -257,29 +256,23 @@ function renderActiveCall() {
             <b>${c.scenario.label}</b><br>
             Type : ${c.scenario.type} – 
             <span class="badge prio-${c.scenario.prio}">${c.scenario.prio}</span><br>
-            Victimes estimées : ${c.scenario.victims} – Environnement: ${c.scenario.env}<br>
+            Victimes estimées : ${c.scenario.victims}<br>
             <p>${c.scenario.desc}</p>
 
-            <h4>1. Informations appelant</h4>
-            <label class="small-label">Nom / Identité (obligatoire)</label>
-            <input ${disabledCore} id="callerName" value="${c.callerName}">
-            <label class="small-label">Téléphone (obligatoire)</label>
-            <input ${disabledCore} id="callerPhone" value="${c.callerPhone}">
+            <h4>Description libre</h4>
+            <textarea id="freeDesc">${c.freeDesc}</textarea>
 
-            <h4>2. Description libre (obligatoire)</h4>
-            <textarea ${disabledCore} id="freeDesc">${c.freeDesc}</textarea>
-
-            <h4>3. Évaluation rapide</h4>
+            <h4>Évaluation</h4>
             <div class="row">
                 <div>
-                    <label class="small-label">Gravité perçue</label>
-                    <select id="gravity" ${disabledCore}>
+                    <label class="small-label">Gravité</label>
+                    <select id="gravity">
                         ${["P0","P1","P2","P3"].map(p=>`<option value="${p}" ${c.gravity===p?"selected":""}>${p}</option>`).join("")}
                     </select>
                 </div>
                 <div>
                     <label class="small-label">Environnement</label>
-                    <select id="env" ${disabledCore}>
+                    <select id="env">
                         ${["Domicile","Immeuble","Voie publique","Route","Parc","Transport","Zone industrielle","Lieu public","Chantier","Inconnu"].map(e=>`<option value="${e}" ${c.env===e?"selected":""}>${e}</option>`).join("")}
                     </select>
                 </div>
@@ -288,13 +281,13 @@ function renderActiveCall() {
             <div class="row">
                 <div>
                     <label class="small-label">Alcool / Drogues</label>
-                    <select id="alcoholDrugs" ${disabledCore}>
+                    <select id="alcoholDrugs">
                         ${["Inconnu","Oui suspecté","Non"].map(v=>`<option value="${v}" ${c.alcoholDrugs===v?"selected":""}>${v}</option>`).join("")}
                     </select>
                 </div>
                 <div>
                     <label class="small-label">Arme présente</label>
-                    <select id="weaponPresent" ${disabledCore}>
+                    <select id="weaponPresent">
                         ${["Inconnu","Oui","Non"].map(v=>`<option value="${v}" ${c.weaponPresent===v?"selected":""}>${v}</option>`).join("")}
                     </select>
                 </div>
@@ -303,13 +296,13 @@ function renderActiveCall() {
             <div class="row">
                 <div>
                     <label class="small-label">Enfants impliqués</label>
-                    <select id="childrenInvolved" ${disabledCore}>
+                    <select id="childrenInvolved">
                         ${["Inconnu","Oui","Non"].map(v=>`<option value="${v}" ${c.childrenInvolved===v?"selected":""}>${v}</option>`).join("")}
                     </select>
                 </div>
                 <div>
                     <label class="small-label">Canular suspecté</label>
-                    <select id="suspectedHoax" ${disabledCore}>
+                    <select id="suspectedHoax">
                         ${["Non","Oui"].map(v=>`<option value="${v}" ${c.suspectedHoax===v?"selected":""}>${v}</option>`).join("")}
                     </select>
                 </div>
@@ -317,25 +310,25 @@ function renderActiveCall() {
 
             <div class="row">
                 <div>
-                    <label class="small-label">Danger toujours présent ?</label>
-                    <select id="dangerOngoing" ${disabledCore}>
+                    <label class="small-label">Danger persistant</label>
+                    <select id="dangerOngoing">
                         ${["Inconnu","Oui","Non"].map(v=>`<option value="${v}" ${c.dangerOngoing===v?"selected":""}>${v}</option>`).join("")}
                     </select>
                 </div>
                 <div>
                     <label class="small-label">Sécurité des secours</label>
-                    <select id="safetyForRescuers" ${disabledCore}>
+                    <select id="safetyForRescuers">
                         ${["Inconnu","OK","Risque"].map(v=>`<option value="${v}" ${c.safetyForRescuers===v?"selected":""}>${v}</option>`).join("")}
                     </select>
                 </div>
             </div>
 
-            <h4>4. Commentaires opérateur</h4>
+            <h4>Commentaires opérateur</h4>
             <textarea id="comment"></textarea>
             <button class="btn" onclick="addComment()">Ajouter commentaire</button>
             <div id="comment-list">${c.comments.map(cm=>"<div>• "+cm+"</div>").join("")}</div>
 
-            <h4>5. Services à engager</h4>
+            <h4>Services à engager</h4>
             ${serviceButton("SAMU")}
             ${serviceButton("Pompiers")}
             ${serviceButton("Police")}
@@ -345,10 +338,10 @@ function renderActiveCall() {
             ${serviceButton("DOC")}
             ${serviceButton("Douanes")}
 
-            <h4>6. Validation du dossier</h4>
-            <button class="btn" onclick="saveCoreFields()">💾 Sauvegarder les infos</button>
-            <button class="btn" onclick="sendDossier()" ${c.dossierSent ? "" : ""}>📤 Envoyer le dossier</button>
-            <button class="btn" onclick="closeCall()">✅ Clôturer le dossier</button>
+            <h4>Validation</h4>
+            <button class="btn" onclick="saveCoreFields()">💾 Sauvegarder</button>
+            <button class="btn" onclick="sendDossier()">📤 Envoyer dossier</button>
+            <button class="btn" onclick="closeCall()">✅ Clôturer</button>
         </div>
     `;
 }
@@ -358,14 +351,12 @@ function serviceButton(name) {
 }
 
 /* ------------------------------
-   SAUVEGARDE DES CHAMPS DOSSIER
+   SAUVEGARDE
 --------------------------------*/
 function saveCoreFields() {
     if (!activeCall) return;
     const c = activeCall;
-    c.callerName = document.getElementById("callerName").value.trim();
-    c.callerPhone = document.getElementById("callerPhone").value.trim();
-    c.freeDesc = document.getElementById("freeDesc").value.trim();
+    c.freeDesc = document.getElementById("freeDesc").value;
     c.gravity = document.getElementById("gravity").value;
     c.env = document.getElementById("env").value;
     c.alcoholDrugs = document.getElementById("alcoholDrugs").value;
@@ -374,7 +365,6 @@ function saveCoreFields() {
     c.suspectedHoax = document.getElementById("suspectedHoax").value;
     c.dangerOngoing = document.getElementById("dangerOngoing").value;
     c.safetyForRescuers = document.getElementById("safetyForRescuers").value;
-    alert("Dossier sauvegardé (modifiable tant qu'il n'est pas clôturé).");
 }
 
 /* ------------------------------
@@ -382,34 +372,18 @@ function saveCoreFields() {
 --------------------------------*/
 function sendDossier() {
     if (!activeCall) return;
-    const c = activeCall;
-
-    // Vérif champs obligatoires
-    const name = document.getElementById("callerName").value.trim();
-    const phone = document.getElementById("callerPhone").value.trim();
-    const desc = document.getElementById("freeDesc").value.trim();
-    if (!name || !phone || !desc) {
-        alert("Merci de remplir au minimum : Nom appelant, Téléphone, Description libre.");
-        return;
-    }
-
     saveCoreFields();
-    c.dossierSent = true;
+    activeCall.dossierSent = true;
 
-    // Ajouter dans la liste des actions/dossiers envoyés si pas déjà
-    if (!actions.find(a => a.id === c.id)) {
+    const existing = actions.find(a => a.id === activeCall.id);
+    if (!existing) {
         actions.push({
-            id: c.id,
-            label: c.scenario.label,
+            id: activeCall.id,
+            label: activeCall.scenario.label,
             time: new Date().toLocaleTimeString(),
-            services: [...c.services]
+            services: [...activeCall.services]
         });
-    } else {
-        // mettre à jour services
-        const a = actions.find(a => a.id === c.id);
-        a.services = [...c.services];
     }
-
     renderActions();
     renderActiveCall();
 }
@@ -423,79 +397,5 @@ function addComment() {
     if (!txt) return;
     activeCall.comments.push(txt);
     document.getElementById("comment").value = "";
-    renderActiveCall();
-}
-
-/* ------------------------------
-   ENVOI DE SERVICES
---------------------------------*/
-function sendService(s) {
-    if (!activeCall) return;
-    activeCall.services.push(s);
-    // si dossier déjà envoyé, mettre à jour actions
-    if (activeCall.dossierSent) {
-        const a = actions.find(a => a.id === activeCall.id);
-        if (a) a.services = [...activeCall.services];
-        else actions.push({id: activeCall.id, label: activeCall.scenario.label, time:new Date().toLocaleTimeString(), services:[...activeCall.services]});
-        renderActions();
-    }
-    renderActiveCall();
-}
-
-function renderActions() {
-    const div = document.getElementById("actions");
-    div.innerHTML = actions.map(a => `
-        <div class="call-card">
-            <b>Dossier #${a.id}</b> – ${a.label}<br>
-            <span class="small-label">Envoyé à ${a.time}</span><br>
-            Services engagés : ${a.services.length ? a.services.join(", ") : "Aucun pour l'instant"}
-        </div>
-    `).join("");
-}
-
-/* ------------------------------
-   CLÔTURE APPEL
---------------------------------*/
-function closeCall() {
-    if (!activeCall) return;
-    history.push(activeCall);
-    // retirer des actions si présent
-    actions = actions.filter(a => a.id !== activeCall.id);
-    activeCall = null;
-    renderActiveCall();
-    renderActions();
-    renderHistory();
-}
-
-function renderHistory() {
-    const div = document.getElementById("history");
-    div.innerHTML = history.map(h => `
-        <div class="call-card">
-            <b>#${h.id}</b> – ${h.scenario.label}<br>
-            Gravité finale : ${h.gravity} – Environnement : ${h.env}<br>
-            Services envoyés : ${h.services.join(", ") || "Aucun"}<br>
-            Commentaires : ${h.comments.length}<br>
-            Appelant : ${h.callerName || "Inconnu"} (${h.callerPhone || "N/A"})
-        </div>
-    `).join("");
-}
-
-/* ------------------------------
-   STATISTIQUES
---------------------------------*/
-setInterval(() => {
-    document.getElementById("stats").innerHTML =
-        `Appels en attente: ${queue.length} | Dossier en cours: ${activeCall ? "#"+activeCall.id : "aucun"} | Dossiers envoyés: ${actions.length} | Historique: ${history.length}`;
-}, 500);
-
-/* ------------------------------
-   LANCEMENT AUTOMATIQUE
-   (débit augmenté : ~6–10s)
---------------------------------*/
-setInterval(() => generateCall(), 6000 + Math.random()*4000);
-
-</script>
-
-</body>
-</html>
+    renderActiveCall
 
