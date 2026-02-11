@@ -2,235 +2,1000 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Poste de Régulation - Métro</title>
+  <title>Poste Central RATP - Simulation</title>
   <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
     body {
       margin: 0;
       background: #050608;
       color: #f5f5f5;
-      font-family: system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
 
     header {
-      padding: 16px 24px;
+      padding: 12px 24px;
       background: #111318;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
       border-bottom: 1px solid #22252b;
     }
 
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
     .logo {
-      width: 34px;
-      height: 34px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       background: radial-gradient(circle at 30% 30%, #00ff9d, #007a5a);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 700;
-      font-size: 18px;
+      font-weight: 800;
+      font-size: 20px;
+    }
+
+    .station-name {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 14px;
+      color: #c5c5c5;
+    }
+
+    .clock {
+      font-variant-numeric: tabular-nums;
+      font-size: 16px;
     }
 
     main {
+      flex: 1;
       display: grid;
-      grid-template-columns: 2fr 1fr;
-      min-height: calc(100vh - 80px);
+      grid-template-columns: 3fr 2fr;
+      min-height: 0;
     }
 
     .board {
-      padding: 24px;
+      padding: 20px 24px;
       border-right: 1px solid #22252b;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .board-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 12px;
+    }
+
+    .board-title {
+      font-size: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #9fa3b5;
+    }
+
+    .board-subtitle {
+      font-size: 13px;
+      color: #7f8494;
+    }
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filters select {
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid #333745;
+      background: #050608;
+      color: #f5f5f5;
+      font-size: 13px;
+    }
+
+    .filters button {
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: none;
+      background: #303342;
+      color: #f5f5f5;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .filters button.active {
+      background: #1f6feb;
+    }
+
+    .table-wrapper {
+      flex: 1;
+      overflow: auto;
+      border-radius: 8px;
+      border: 1px solid #22252b;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 15px;
+      font-size: 14px;
+    }
+
+    thead {
+      position: sticky;
+      top: 0;
+      background: #111318;
+      z-index: 1;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: #8b90a0;
     }
 
     th, td {
-      padding: 10px 8px;
+      padding: 8px 8px;
       border-bottom: 1px solid #22252b;
+      white-space: nowrap;
     }
 
-    tbody tr:nth-child(even) { background: #101219; }
-    tbody tr:nth-child(odd) { background: #080a10; }
+    tbody tr:nth-child(even) {
+      background: #101219;
+    }
+
+    tbody tr:nth-child(odd) {
+      background: #080a10;
+    }
+
+    tbody tr.highlight {
+      animation: highlight 0.8s ease-out;
+    }
+
+    @keyframes highlight {
+      from { background-color: #264f78; }
+      to { background-color: inherit; }
+    }
 
     .line-badge {
-      padding: 4px 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 26px;
+      padding: 2px 8px;
       border-radius: 999px;
+      font-size: 12px;
       font-weight: 700;
-      font-size: 13px;
       color: #000;
     }
 
+    /* Couleurs métro RATP approximatives */
     .line-1 { background: #ffcd00; }
-    .line-4 { background: #00a651; color: #fff; }
-    .line-14 { background: #6ec4e8; }
-    .line-A { background: #e2001a; color: #fff; }
+    .line-2 { background: #003ca6; color:#fff; }
+    .line-3 { background: #837902; }
+    .line-3bis { background: #6ec4e8; }
+    .line-4 { background: #be418d; color:#fff; }
+    .line-5 { background: #ff7e2e; }
+    .line-6 { background: #6eca97; }
+    .line-7 { background: #f3a4ba; }
+    .line-7bis { background: #6ec4e8; }
+    .line-8 { background: #cf9fff; }
+    .line-9 { background: #b6bd00; }
+    .line-10 { background: #c9910d; }
+    .line-11 { background: #704b1c; color:#fff; }
+    .line-12 { background: #007852; color:#fff; }
+    .line-13 { background: #6ec4e8; }
+    .line-14 { background: #62259d; color:#fff; }
+
+    /* RER */
+    .line-A { background: #e2001a; color:#fff; }
+    .line-B { background: #003da5; color:#fff; }
+    .line-C { background: #f7d117; color:#000; }
+    .line-D { background: #00a651; color:#fff; }
+    .line-E { background: #6e2c91; color:#fff; }
+
+    .time {
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      font-weight: 600;
+    }
+
+    .status {
+      font-size: 12px;
+      text-align: right;
+      font-weight: 500;
+    }
+
+    .status-OK { color: #00d084; }
+    .status-RETARD { color: #ffb347; }
+    .status-INCIDENT { color: #ff5c5c; }
+    .status-SUPPRIME { color: #ff5c5c; text-decoration: line-through; }
+    .status-TERMINUS { color: #9fa3b5; }
 
     .controls {
-      padding: 24px;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
-    .control-group {
-      margin-bottom: 20px;
-      padding: 12px;
-      background: #0b0d13;
-      border: 1px solid #22252b;
+    .controls h2 {
+      margin: 0 0 4px;
+      font-size: 16px;
+    }
+
+    .controls p {
+      margin: 0 0 10px;
+      font-size: 12px;
+      color: #a0a4b3;
+    }
+
+    .control-section {
       border-radius: 8px;
+      border: 1px solid #22252b;
+      padding: 10px 12px;
+      background: #0b0d13;
     }
 
-    select, input {
+    .control-section-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #d0d3df;
+    }
+
+    .control-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .control-row-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    label {
+      font-size: 11px;
+      color: #9fa3b5;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    select, input[type="number"], input[type="text"] {
       width: 100%;
-      padding: 6px 8px;
-      background: #050608;
-      border: 1px solid #333745;
+      padding: 4px 6px;
       border-radius: 4px;
-      color: #fff;
+      border: 1px solid #333745;
+      background: #050608;
+      color: #f5f5f5;
+      font-size: 12px;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
     }
 
     button {
-      padding: 8px 12px;
       border: none;
       border-radius: 4px;
+      padding: 5px 9px;
+      font-size: 12px;
       cursor: pointer;
       background: #1f6feb;
       color: #fff;
-      margin-right: 6px;
-      margin-top: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
 
-    button.danger { background: #d73a49; }
-    button.secondary { background: #303342; }
+    button.secondary {
+      background: #303342;
+    }
+
+    button.danger {
+      background: #d73a49;
+    }
+
+    button.warning {
+      background: #ffb347;
+      color: #000;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .badge-live {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #ff5c5c;
+    }
+
+    .badge-live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ff5c5c;
+      box-shadow: 0 0 8px #ff5c5c;
+    }
+
+    footer {
+      padding: 6px 24px;
+      font-size: 11px;
+      color: #7b7f8f;
+      border-top: 1px solid #22252b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #050608;
+    }
+
+    @media (max-width: 1100px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+      .board {
+        border-right: none;
+        border-bottom: 1px solid #22252b;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .control-row, .control-row-3 {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
-
 <header>
-  <div style="display:flex; align-items:center; gap:12px;">
+  <div class="header-left">
     <div class="logo">M</div>
     <div>
-      <div style="font-size:20px; font-weight:600;">Châtelet - Les Halles</div>
-      <div style="font-size:12px; color:#9fa3b5;">Simulation temps réel</div>
+      <div class="station-name">Poste Central RATP - Simulation</div>
+      <div style="font-size: 12px; color:#9fa3b5;">Réseau Métro & RER — Mode Dieu activé</div>
     </div>
   </div>
-  <div id="clock" style="font-size:18px; font-variant-numeric: tabular-nums;"></div>
+  <div class="header-right">
+    <span class="badge-live">
+      <span class="badge-live-dot"></span>
+      Flux simulé en temps réel
+    </span>
+    <span class="clock" id="clock"></span>
+  </div>
 </header>
 
 <main>
   <section class="board">
-    <h2>Prochains passages</h2>
-    <table>
-      <thead>
+    <div class="board-header">
+      <div>
+        <div class="board-title">Prochains passages</div>
+        <div class="board-subtitle">Vue globale réseau — triée par temps d’attente</div>
+      </div>
+      <div style="font-size:11px; color:#7f8494;" id="stats"></div>
+    </div>
+
+    <div class="filters">
+      <select id="filter-mode">
+        <option value="ALL">Tout le réseau</option>
+        <option value="METRO">Métro uniquement</option>
+        <option value="RER">RER uniquement</option>
+      </select>
+      <select id="filter-line">
+        <option value="ALL">Toutes les lignes</option>
+      </select>
+      <button id="filter-incident">Incidents</button>
+      <button id="filter-retard">Retards</button>
+      <button id="filter-ok">Trafic normal</button>
+      <button id="filter-reset" class="secondary">Réinitialiser filtres</button>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
         <tr>
+          <th>Type</th>
           <th>Ligne</th>
+          <th>Mission</th>
           <th>Destination</th>
           <th>Quai</th>
           <th>Dans</th>
           <th>Statut</th>
         </tr>
-      </thead>
-      <tbody id="board-body"></tbody>
-    </table>
+        </thead>
+        <tbody id="board-body">
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <aside class="controls">
     <h2>Panneau de régulation</h2>
+    <p>Ajoute, modifie, supprime, déclare des incidents, lance des modes de simulation… Tu es le régulateur.</p>
 
-    <div class="control-group">
-      <label>Train à modifier</label>
-      <select id="train-select"></select>
+    <!-- Section sélection train -->
+    <div class="control-section">
+      <div class="control-section-title">Sélection du train</div>
+      <div class="control-row">
+        <div>
+          <label for="train-select">Train à modifier</label>
+          <select id="train-select"></select>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button class="secondary" onclick="scrollToSelected()">Voir dans le tableau</button>
+        </div>
+      </div>
     </div>
 
-    <div class="control-group">
-      <label>Nouveau temps (minutes)</label>
-      <input type="number" id="new-time" min="0" value="3">
-      <button onclick="applyTime()">Appliquer</button>
+    <!-- Section modification train -->
+    <div class="control-section">
+      <div class="control-section-title">Modifier le train sélectionné</div>
+      <div class="control-row-3">
+        <div>
+          <label for="edit-time">Temps (min)</label>
+          <input type="number" id="edit-time" min="0" value="3">
+        </div>
+        <div>
+          <label for="edit-quai">Quai</label>
+          <input type="text" id="edit-quai" maxlength="3" placeholder="A, B, 1...">
+        </div>
+        <div>
+          <label for="edit-status">Statut</label>
+          <select id="edit-status">
+            <option value="OK">OK</option>
+            <option value="RETARD">Retard</option>
+            <option value="INCIDENT">Incident</option>
+            <option value="SUPPRIME">Supprimé</option>
+            <option value="TERMINUS">Terminus</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button onclick="applyEdit()">Appliquer</button>
+        <button class="secondary" onclick="addDelayToSelected(2)">+2 min</button>
+        <button class="secondary" onclick="addDelayToSelected(5)">+5 min</button>
+        <button class="warning" onclick="setStatusToSelected('RETARD')">Marquer en retard</button>
+        <button class="danger" onclick="setStatusToSelected('INCIDENT')">Incident</button>
+        <button class="danger" onclick="setStatusToSelected('SUPPRIME')">Supprimer</button>
+      </div>
     </div>
 
-    <div class="control-group">
-      <label>Retard</label>
-      <button class="secondary" onclick="addDelay(2)">+2 min</button>
-      <button class="secondary" onclick="addDelay(5)">+5 min</button>
-      <button class="danger" onclick="setIncident()">Incident</button>
+    <!-- Section ajout train -->
+    <div class="control-section">
+      <div class="control-section-title">Ajouter un train</div>
+      <div class="control-row-3">
+        <div>
+          <label for="add-type">Type</label>
+          <select id="add-type">
+            <option value="METRO">Métro</option>
+            <option value="RER">RER</option>
+          </select>
+        </div>
+        <div>
+          <label for="add-line">Ligne</label>
+          <select id="add-line"></select>
+        </div>
+        <div>
+          <label for="add-time">Dans (min)</label>
+          <input type="number" id="add-time" min="0" value="3">
+        </div>
+      </div>
+      <div class="control-row">
+        <div>
+          <label for="add-mission">Mission (code)</label>
+          <input type="text" id="add-mission" placeholder="ex : NORA, LAMI, etc.">
+        </div>
+        <div>
+          <label for="add-dest">Destination</label>
+          <input type="text" id="add-dest" placeholder="ex : La Défense">
+        </div>
+      </div>
+      <div class="control-row">
+        <div>
+          <label for="add-quai">Quai</label>
+          <input type="text" id="add-quai" placeholder="A, B, 1..." maxlength="3">
+        </div>
+        <div>
+          <label for="add-status">Statut</label>
+          <select id="add-status">
+            <option value="OK">OK</option>
+            <option value="RETARD">Retard</option>
+            <option value="INCIDENT">Incident</option>
+            <option value="SUPPRIME">Supprimé</option>
+            <option value="TERMINUS">Terminus</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button onclick="addTrain()">Ajouter le train</button>
+      </div>
     </div>
 
-    <div class="control-group">
-      <label>Actions globales</label>
-      <button onclick="randomize()">Randomiser</button>
-      <button class="danger" onclick="resetAll()">Réinitialiser</button>
+    <!-- Section modes de simulation -->
+    <div class="control-section">
+      <div class="control-section-title">Modes de simulation</div>
+      <div class="btn-row">
+        <button class="secondary" onclick="setPreset('NORMAL')">Trafic normal</button>
+        <button class="warning" onclick="setPreset('RUSH')">Heure de pointe</button>
+        <button class="danger" onclick="setPreset('CHAOS')">Chaos total</button>
+        <button class="secondary" onclick="setPreset('NUIT')">Service réduit</button>
+      </div>
+      <div class="btn-row">
+        <button onclick="randomizeAll()">Randomiser tout</button>
+        <button class="secondary" onclick="resetAll()">Reset complet</button>
+      </div>
+    </div>
+
+    <!-- Section incidents globaux -->
+    <div class="control-section">
+      <div class="control-section-title">Incidents globaux</div>
+      <div class="control-row">
+        <div>
+          <label for="incident-line">Ligne</label>
+          <select id="incident-line">
+            <option value="ALL">Tout le réseau</option>
+          </select>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <div class="btn-row">
+            <button class="danger" onclick="declareIncident()">Incident majeur</button>
+            <button class="warning" onclick="declareRetard()">Retards importants</button>
+          </div>
+        </div>
+      </div>
     </div>
   </aside>
 </main>
 
-<script>
-  const trains = [
-    { line: "1", class: "line-1", dest: "La Défense", quai: "A", time: 2, status: "OK" },
-    { line: "4", class: "line-4", dest: "Mairie de Montrouge", quai: "B", time: 5, status: "OK" },
-    { line: "14", class: "line-14", dest: "Olympiades", quai: "C", time: 7, status: "OK" },
-    { line: "A", class: "line-A", dest: "Marne-la-Vallée", quai: "D", time: 3, status: "OK" }
-  ];
+<footer>
+  <span>Simulation non officielle — Juste pour jouer au régulateur.</span>
+  <span>Tick simulation : <span id="tick-speed-label">1s</span> — <button class="secondary" onclick="toggleSimulation()"><span id="sim-btn-label">Pause</span></button></span>
+</footer>
 
-  function renderBoard() {
+<script>
+  // --- Données de base ---
+
+  const LINES = {
+    METRO: [
+      "1","2","3","3bis","4","5","6","7","7bis","8","9","10","11","12","13","14"
+    ],
+    RER: ["A","B","C","D","E"]
+  };
+
+  const DEFAULT_DESTINATIONS = {
+    "1": ["La Défense", "Château de Vincennes"],
+    "2": ["Porte Dauphine", "Nation"],
+    "3": ["Pont de Levallois", "Gallieni"],
+    "3bis": ["Gambetta", "Porte des Lilas"],
+    "4": ["Bagneux", "Porte de Clignancourt"],
+    "5": ["Bobigny", "Place d'Italie"],
+    "6": ["Charles de Gaulle - Étoile", "Nation"],
+    "7": ["La Courneuve", "Villejuif", "Mairie d'Ivry"],
+    "7bis": ["Louis Blanc", "Pré Saint-Gervais"],
+    "8": ["Balard", "Créteil"],
+    "9": ["Pont de Sèvres", "Mairie de Montreuil"],
+    "10": ["Boulogne", "Gare d'Austerlitz"],
+    "11": ["Châtelet", "Mairie des Lilas"],
+    "12": ["Front Populaire", "Mairie d'Issy"],
+    "13": ["Saint-Denis", "Asnières", "Châtillon"],
+    "14": ["Saint-Lazare", "Olympiades"],
+    "A": ["Cergy", "Poissy", "Marne-la-Vallée"],
+    "B": ["Aéroport CDG", "Robinson", "Saint-Rémy"],
+    "C": ["Pontoise", "Versailles", "Massy"],
+    "D": ["Creil", "Melun", "Malesherbes"],
+    "E": ["Haussmann", "Tournan", "Chelles"]
+  };
+
+  const STATUS_VALUES = ["OK","RETARD","INCIDENT","SUPPRIME","TERMINUS"];
+
+  let trains = [];
+  let simulationRunning = true;
+  let tickSpeedMs = 1000; // 1s
+  let lastId = 0;
+
+  // --- Utilitaires ---
+
+  function randomFrom(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function createTrain({type, line, mission, dest, quai, time, status}) {
+    return {
+      id: ++lastId,
+      type,
+      line,
+      mission: mission || "",
+      dest,
+      quai,
+      time,
+      status
+    };
+  }
+
+  function generateInitialTrains() {
+    const list = [];
+
+    // Métro : quelques trains par ligne
+    LINES.METRO.forEach(line => {
+      const dests = DEFAULT_DESTINATIONS[line] || ["Terminus inconnu"];
+      const baseCount = 2 + Math.floor(Math.random() * 3); // 2 à 4 trains
+      for (let i = 0; i < baseCount; i++) {
+        list.push(createTrain({
+          type: "METRO",
+          line,
+          mission: "",
+          dest: randomFrom(dests),
+          quai: String.fromCharCode(65 + (i % 4)), // A, B, C, D
+          time: 1 + Math.floor(Math.random() * 12),
+          status: "OK"
+        }));
+      }
+    });
+
+    // RER : un peu moins mais plus espacés
+    LINES.RER.forEach(line => {
+      const dests = DEFAULT_DESTINATIONS[line] || ["Terminus inconnu"];
+      const baseCount = 2 + Math.floor(Math.random() * 2); // 2 à 3 trains
+      for (let i = 0; i < baseCount; i++) {
+        list.push(createTrain({
+          type: "RER",
+          line,
+          mission: line + (10 + i),
+          dest: randomFrom(dests),
+          quai: String.fromCharCode(65 + (i % 3)),
+          time: 3 + Math.floor(Math.random() * 20),
+          status: "OK"
+        }));
+      }
+    });
+
+    return list;
+  }
+
+  // --- Rendu ---
+
+  function renderFilters() {
+    const filterLine = document.getElementById("filter-line");
+    const incidentLine = document.getElementById("incident-line");
+    const addLine = document.getElementById("add-line");
+
+    const allLines = [...LINES.METRO, ...LINES.RER];
+
+    filterLine.innerHTML = '<option value="ALL">Toutes les lignes</option>' +
+      allLines.map(l => `<option value="${l}">${l}</option>`).join("");
+
+    incidentLine.innerHTML = '<option value="ALL">Tout le réseau</option>' +
+      allLines.map(l => `<option value="${l}">${l}</option>`).join("");
+
+    addLine.innerHTML = allLines.map(l => `<option value="${l}">${l}</option>`).join("");
+  }
+
+  function renderTrainSelect() {
+    const select = document.getElementById("train-select");
+    select.innerHTML = trains
+      .sort((a,b) => a.time - b.time)
+      .map(t => `<option value="${t.id}">[${t.type} ${t.line}] ${t.dest} (${t.time} min)</option>`)
+      .join("");
+    if (trains.length > 0) {
+      loadSelectedTrain(trains[0].id);
+    }
+  }
+
+  function getFilters() {
+    return {
+      mode: document.getElementById("filter-mode").value,
+      line: document.getElementById("filter-line").value,
+      onlyIncident: document.getElementById("filter-incident").classList.contains("active"),
+      onlyRetard: document.getElementById("filter-retard").classList.contains("active"),
+      onlyOk: document.getElementById("filter-ok").classList.contains("active")
+    };
+  }
+
+  function applyFilters(list) {
+    const f = getFilters();
+    return list.filter(t => {
+      if (f.mode === "METRO" && t.type !== "METRO") return false;
+      if (f.mode === "RER" && t.type !== "RER") return false;
+      if (f.line !== "ALL" && t.line !== f.line) return false;
+
+      if (f.onlyIncident && t.status !== "INCIDENT") return false;
+      if (f.onlyRetard && t.status !== "RETARD") return false;
+      if (f.onlyOk && t.status !== "OK") return false;
+
+      return true;
+    });
+  }
+
+  function renderBoard(highlightId = null) {
     const tbody = document.getElementById("board-body");
     tbody.innerHTML = "";
 
-    trains.forEach((t, i) => {
-      tbody.innerHTML += `
-        <tr>
-          <td><span class="line-badge ${t.class}">${t.line}</span></td>
-          <td>${t.dest}</td>
-          <td>${t.quai}</td>
-          <td style="text-align:right;">${t.time} min</td>
-          <td style="text-align:right; color:${t.status === "OK" ? "#00d084" : t.status === "Incident" ? "#ff5c5c" : "#ffb347"};">
-            ${t.status}
-          </td>
-        </tr>
+    const filtered = applyFilters([...trains]).sort((a,b) => a.time - b.time);
+
+    filtered.forEach(t => {
+      const tr = document.createElement("tr");
+      if (highlightId && t.id === highlightId) {
+        tr.classList.add("highlight");
+      }
+
+      const statusClass = "status-" + t.status;
+
+      tr.innerHTML = `
+        <td>${t.type}</td>
+        <td><span class="line-badge line-${t.line.replace(' ', '')}">${t.line}</span></td>
+        <td>${t.mission || "-"}</td>
+        <td>${t.dest}</td>
+        <td>${t.quai}</td>
+        <td class="time">${t.time <= 0 ? "À quai" : t.time + " min"}</td>
+        <td class="status ${statusClass}">${t.status}</td>
       `;
+      tr.dataset.id = t.id;
+      tbody.appendChild(tr);
     });
 
+    // Stats
+    const statsEl = document.getElementById("stats");
+    const total = trains.length;
+    const incidents = trains.filter(t => t.status === "INCIDENT").length;
+    const retards = trains.filter(t => t.status === "RETARD").length;
+    const suppr = trains.filter(t => t.status === "SUPPRIME").length;
+    statsEl.textContent = `${total} trains — ${incidents} incidents — ${retards} retards — ${suppr} supprimés`;
+  }
+
+  function loadSelectedTrain(id) {
+    const t = trains.find(tr => tr.id === Number(id));
+    if (!t) return;
+    document.getElementById("edit-time").value = t.time;
+    document.getElementById("edit-quai").value = t.quai;
+    document.getElementById("edit-status").value = t.status;
+  }
+
+  function scrollToSelected() {
     const select = document.getElementById("train-select");
-    select.innerHTML = trains.map((t, i) => `<option value="${i}">${t.line} → ${t.dest}</option>`).join("");
+    const id = Number(select.value);
+    const row = document.querySelector(`#board-body tr[data-id="${id}"]`);
+    if (row) {
+      row.scrollIntoView({behavior:"smooth", block:"center"});
+      row.classList.add("highlight");
+      setTimeout(() => row.classList.remove("highlight"), 1000);
+    }
   }
 
-  function applyTime() {
-    const i = document.getElementById("train-select").value;
-    const newTime = parseInt(document.getElementById("new-time").value);
-    trains[i].time = newTime;
-    trains[i].status = "OK";
+  // --- Actions régulateur ---
+
+  function applyEdit() {
+    const select = document.getElementById("train-select");
+    const id = Number(select.value);
+    const t = trains.find(tr => tr.id === id);
+    if (!t) return;
+    t.time = Number(document.getElementById("edit-time").value);
+    t.quai = document.getElementById("edit-quai").value || t.quai;
+    t.status = document.getElementById("edit-status").value;
+    renderBoard(id);
+    renderTrainSelect();
+  }
+
+  function addDelayToSelected(min) {
+    const select = document.getElementById("train-select");
+    const id = Number(select.value);
+    const t = trains.find(tr => tr.id === id);
+    if (!t) return;
+    t.time += min;
+    if (t.status === "OK") t.status = "RETARD";
+    renderBoard(id);
+    renderTrainSelect();
+    loadSelectedTrain(id);
+  }
+
+  function setStatusToSelected(status) {
+    const select = document.getElementById("train-select");
+    const id = Number(select.value);
+    const t = trains.find(tr => tr.id === id);
+    if (!t) return;
+    t.status = status;
+    renderBoard(id);
+    renderTrainSelect();
+    loadSelectedTrain(id);
+  }
+
+  function addTrain() {
+    const type = document.getElementById("add-type").value;
+    const line = document.getElementById("add-line").value;
+    const time = Number(document.getElementById("add-time").value) || 0;
+    const mission = document.getElementById("add-mission").value;
+    const dest = document.getElementById("add-dest").value || (DEFAULT_DESTINATIONS[line] ? randomFrom(DEFAULT_DESTINATIONS[line]) : "Terminus");
+    const quai = document.getElementById("add-quai").value || "A";
+    const status = document.getElementById("add-status").value;
+
+    const t = createTrain({type, line, mission, dest, quai, time, status});
+    trains.push(t);
+    renderBoard(t.id);
+    renderTrainSelect();
+    document.getElementById("train-select").value = t.id;
+    loadSelectedTrain(t.id);
+  }
+
+  function setPreset(mode) {
+    if (mode === "NORMAL") {
+      trains.forEach(t => {
+        t.time = 2 + Math.floor(Math.random() * 10);
+        t.status = "OK";
+      });
+    } else if (mode === "RUSH") {
+      trains.forEach(t => {
+        t.time = 1 + Math.floor(Math.random() * 6);
+        if (Math.random() < 0.25) t.status = "RETARD";
+        else t.status = "OK";
+      });
+    } else if (mode === "CHAOS") {
+      trains.forEach(t => {
+        t.time = 1 + Math.floor(Math.random() * 20);
+        const r = Math.random();
+        if (r < 0.25) t.status = "INCIDENT";
+        else if (r < 0.5) t.status = "RETARD";
+        else if (r < 0.6) t.status = "SUPPRIME";
+        else t.status = "OK";
+      });
+    } else if (mode === "NUIT") {
+      trains.forEach(t => {
+        t.time = 10 + Math.floor(Math.random() * 20);
+        if (Math.random() < 0.15) t.status = "SUPPRIME";
+        else t.status = "OK";
+      });
+    }
     renderBoard();
+    renderTrainSelect();
   }
 
-  function addDelay(min) {
-    const i = document.getElementById("train-select").value;
-    trains[i].time += min;
-    trains[i].status = "Retard";
-    renderBoard();
-  }
-
-  function setIncident() {
-    const i = document.getElementById("train-select").value;
-    trains[i].status = "Incident";
-    renderBoard();
-  }
-
-  function randomize() {
+  function randomizeAll() {
     trains.forEach(t => {
-      t.time = Math.floor(Math.random() * 10) + 1;
-      t.status = ["OK", "Retard", "Incident"][Math.floor(Math.random() * 3)];
+      t.time = 1 + Math.floor(Math.random() * 20);
+      t.status = randomFrom(STATUS_VALUES);
     });
     renderBoard();
+    renderTrainSelect();
   }
 
   function resetAll() {
+    trains = generateInitialTrains();
+    renderBoard();
+    renderTrainSelect();
+  }
+
+  function declareIncident() {
+    const line = document.getElementById("incident-line").value;
     trains.forEach(t => {
-      t.time = 3;
-      t.status = "OK";
+      if (line === "ALL" || t.line === line) {
+        t.status = "INCIDENT";
+        t.time += 5 + Math.floor(Math.random() * 15);
+      }
     });
     renderBoard();
+    renderTrainSelect();
   }
+
+  function declareRetard() {
+    const line = document.getElementById("incident-line").value;
+    trains.forEach(t => {
+      if (line === "ALL" || t.line === line) {
+        if (t.status === "OK") t.status = "RETARD";
+        t.time += 3 + Math.floor(Math.random() * 10);
+      }
+    });
+    renderBoard();
+    renderTrainSelect();
+  }
+
+  // --- Simulation temps réel ---
+
+  function tickSimulation() {
+    if (!simulationRunning) return;
+
+    // décrémenter les temps
+    trains.forEach(t => {
+      if (t.time > 0 && t.status !== "SUPPRIME") {
+        t.time -= 1;
+      }
+    });
+
+    // générer de nouveaux trains de temps en temps
+    if (Math.random() < 0.25) {
+      // choisir métro ou RER
+      const type = Math.random() < 0.7 ? "METRO" : "RER";
+      const line = randomFrom(LINES[type]);
+      const dest = randomFrom(DEFAULT_DESTINATIONS[line] || ["Terminus"]);
+      const quai = String.fromCharCode(65 + Math.floor(Math.random() * 4));
+      const time = 5 + Math.floor(Math.random() * 15);
+      const status = Math.random() < 0.1 ? "RETARD" : "OK";
+      const mission = type === "RER" ? line + (10 + Math.floor(Math.random() * 80)) : "";
+
+      trains.push(createTrain({type, line, mission, dest, quai, time, status}));
+    }
+
+    // supprimer les trains trop vieux ou à quai depuis longtemps
+    trains = trains.filter(t => !(t.time <= -2 || (t.status === "SUPPRIME" && t.time <= 0)));
+
+    renderBoard();
+    renderTrainSelect();
+  }
+
+  function toggleSimulation() {
+    simulationRunning = !simulationRunning;
+    document.getElementById("sim-btn-label").textContent = simulationRunning ? "Pause" : "Reprendre";
+  }
+
+  // --- Filtres UI ---
+
+  function setupFilterButtons() {
+    const btnIncident = document.getElementById("filter-incident");
+    const btnRetard = document.getElementById("filter-retard");
+    const btnOk = document.getElementById("filter-ok");
+    const btnReset = document.getElementById("filter-reset");
+
+    btnIncident.addEventListener("click", () => {
+      btnIncident.classList.toggle("active");
+      btnRetard.classList.remove("active");
+      btnOk.classList.remove("active");
+      renderBoard();
+    });
+
+    btnRetard.addEventListener("click", () => {
+      btnRetard.classList.toggle("active");
+      btnIncident.classList.remove("active");
+      btnOk.classList.remove("active");
+      renderBoard();
+    });
+
+    btnOk.addEventListener("click", () => {
+      btnOk.classList.toggle("active");
+      btnIncident.classList.remove("active");
+      btnRetard.classList.remove("active");
+      renderBoard();
+    });
+
+    btnReset.addEventListener("click", () => {
+      btnIncident.classList.remove("active");
+      btnRetard.classList.remove("active");
+      btnOk.classList.remove("active");
+      document.getElementById("filter-mode").value = "ALL";
+      document.getElementById("filter-line").value = "ALL";
+      renderBoard();
+    });
+
+    document.getElementById("filter-mode").addEventListener("change", renderBoard);
+    document.getElementById("filter-line").addEventListener("change", renderBoard);
+  }
+
+  // --- Horloge ---
 
   function updateClock() {
     const now = new Date();
@@ -238,10 +1003,24 @@
       now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   }
 
-  setInterval(updateClock, 1000);
-  updateClock();
-  renderBoard();
-</script>
+  // --- Init ---
 
+  function init() {
+    trains = generateInitialTrains();
+    renderFilters();
+    renderBoard();
+    renderTrainSelect();
+    setupFilterButtons();
+    updateClock();
+    setInterval(updateClock, 1000);
+    setInterval(tickSimulation, tickSpeedMs);
+  }
+
+  document.getElementById("train-select").addEventListener("change", (e) => {
+    loadSelectedTrain(e.target.value);
+  });
+
+  init();
+</script>
 </body>
 </html>
