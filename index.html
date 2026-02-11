@@ -52,6 +52,9 @@
     .status-SUIVANT { color: #7f8494; }
     .status-RETARD { color: #ffb347; }
     .status-INCIDENT { color: #ff5c5c; }
+    .status-SUPPRIME { color: #ff5c5c; text-decoration: line-through; }
+    .status-SUPPRESSION { color: #ffb347; }
+    .status-TERMINUS { color: #f7d117; }
 
     .control-section { border-radius: 8px; border: 1px solid #22252b; padding: 10px 12px; background: #0b0d13; }
     .control-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #d0d3df; }
@@ -127,7 +130,7 @@
 </nav>
 
 <main>
-  <!-- PANEL PRINCIPAL (change selon l’onglet) -->
+  <!-- VUE VOYAGEUR -->
   <section class="panel" id="panel-voyageur">
     <div class="panel-header">
       <div>
@@ -168,6 +171,7 @@
     <div class="line-diagram" id="line-diagram"></div>
   </section>
 
+  <!-- VUE PCC -->
   <section class="panel hidden" id="panel-pcc">
     <div class="panel-header">
       <div>
@@ -190,6 +194,8 @@
           <th>Offset</th>
           <th>Dwell</th>
           <th>Actif</th>
+          <th>Retard</th>
+          <th>Flags</th>
         </tr>
         </thead>
         <tbody id="pcc-body"></tbody>
@@ -199,6 +205,7 @@
     <div class="log-panel" id="log-panel"></div>
   </section>
 
+  <!-- VUE LIGNE -->
   <section class="panel hidden" id="panel-ligne">
     <div class="panel-header">
       <div>
@@ -210,6 +217,7 @@
     <div id="line-schema" style="flex:1; display:flex; flex-direction:column; gap:6px; font-size:12px; overflow:auto;"></div>
   </section>
 
+  <!-- VUE MESSAGES -->
   <section class="panel hidden" id="panel-messages">
     <div class="panel-header">
       <div>
@@ -224,7 +232,7 @@
         <div>
           <label for="msg-type">Type</label>
           <select id="msg-type">
-            <option value="info">Information</option>
+            <option value="normal">Information</option>
             <option value="warning">Perturbation</option>
             <option value="incident">Incident majeur</option>
           </select>
@@ -264,13 +272,27 @@
     </div>
   </section>
 
-  <!-- PANNEAU LATÉRAL : contrôle trains / simulation -->
+  <!-- PANNEAU LATÉRAL -->
   <aside class="side">
     <h2 style="margin:0 0 4px; font-size:15px;">Panneau de régulation RER C</h2>
-    <p style="margin:0 0 8px; font-size:11px; color:#a0a4b3;">Ajoute, retire, modifie les trains, déclenche des retards, incidents, et observe le résultat en direct.</p>
+    <p style="margin:0 0 8px; font-size:11px; color:#a0a4b3;">Ajoute, retire, modifie les trains, déclenche des retards, incidents, suppressions, terminus exceptionnels…</p>
 
     <div class="control-section">
       <div class="control-title">Sélection du train</div>
+      <div class="control-row">
+        <div>
+          <label for="train-filter-station">Filtrer par gare</label>
+          <select id="train-filter-station"></select>
+        </div>
+        <div>
+          <label for="train-filter-dir">Filtrer par sens</label>
+          <select id="train-filter-dir">
+            <option value="0">Tous</option>
+            <option value="1">Aval →</option>
+            <option value="-1">← Amont</option>
+          </select>
+        </div>
+      </div>
       <div class="control-row">
         <div>
           <label for="train-select">Train en circulation</label>
@@ -322,7 +344,31 @@
       <div class="btn-row">
         <button onclick="applyEdit()">Appliquer</button>
         <button class="secondary" onclick="forceDwell()">Forcer arrêt ici</button>
-        <button class="warning" onclick="addDelayToSelected(3)">+3 min retard</button>
+      </div>
+      <div class="control-row-3">
+        <div>
+          <label>Retard rapide</label>
+          <div class="btn-row">
+            <button class="warning" onclick="addDelayToSelected(1)">+1 min</button>
+            <button class="warning" onclick="addDelayToSelected(3)">+3 min</button>
+            <button class="warning" onclick="addDelayToSelected(5)">+5 min</button>
+          </div>
+        </div>
+        <div>
+          <label for="delay-custom">Retard personnalisé (min)</label>
+          <input type="number" id="delay-custom" min="1" max="60" value="10">
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button class="warning" onclick="addCustomDelay()">Appliquer retard</button>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="warning" onclick="markTrainDelayedFlag()">Marquer “RETARDÉ”</button>
+        <button class="danger" onclick="markTrainDeletedImmediate()">Supprimer immédiatement</button>
+        <button class="danger" onclick="markTrainDeleteNext()">Supprimer à la prochaine gare</button>
+        <button class="secondary" onclick="markTrainTerminusExceptionnel()">Terminus exceptionnel ici</button>
+        <button class="secondary" onclick="restoreTrain()">Rétablir train</button>
       </div>
     </div>
 
@@ -382,7 +428,6 @@
 </footer>
 
 <script>
-  // --- Modèle de ligne RER C simplifié ---
   const STATIONS = [
     "Pontoise",
     "Neuville-Université",
@@ -445,7 +490,10 @@
       dwellRemaining: 0,
       offset: offsetMinutes * 60,
       active: true,
-      delay: 0
+      delay: 0,
+      deleted: false,
+      deleteNext: false,
+      terminusExceptionnel: false
     };
     logEvent("TRAIN", `Train ${t.mission} ajouté (${STATIONS[originIndex]} → ${STATIONS[destIndex]}).`);
     return t;
@@ -486,7 +534,7 @@
   }
 
   function etaToStation(train, stationIndex) {
-    if (!train.active) return Infinity;
+    if (!train.active || train.deleted) return Infinity;
     if (train.offset > 0) {
       const base = train.offset;
       const travel = travelTimeBetween(train.positionIndex, stationIndex);
@@ -540,13 +588,16 @@
     return min + " min " + (sec < 10 ? "0" + sec : sec + " s");
   }
 
-  function statusForEta(seconds, delay) {
-    if (seconds === Infinity) return {code: "SUIVANT", label: "Suivant plus tard"};
-    if (seconds <= 0) return {code: "QUAI", label: delay > 60 ? "À quai (retard)" : "À quai"};
-    const min = seconds / 60;
-    if (min <= 0.5) return {code: "DEPART", label: delay > 60 ? "Départ imminent (retard)" : "Départ imminent"};
+  function statusForTrain(train, eta) {
+    if (train.deleted) return {code: "SUPPRIME", label: "Supprimé"};
+    if (train.deleteNext) return {code: "SUPPRESSION", label: "Supprimé à la prochaine gare"};
+    if (train.terminusExceptionnel) return {code: "TERMINUS", label: "Terminus exceptionnel"};
+    if (eta === Infinity) return {code: "SUIVANT", label: "Suivant plus tard"};
+    if (eta <= 0) return {code: train.delay > 60 ? "RETARD" : "QUAI", label: train.delay > 60 ? "À quai (retard)" : "À quai"};
+    const min = eta / 60;
+    if (min <= 0.5) return {code: train.delay > 60 ? "RETARD" : "DEPART", label: train.delay > 60 ? "Départ (retard)" : "Départ imminent"};
     if (min <= 1.5) return {code: "APPROCHE", label: "Approche imminente"};
-    if (min <= 5) return {code: delay > 60 ? "RETARD" : "OK", label: delay > 60 ? "Arrive (retard)" : "Arrive dans"};
+    if (min <= 5) return {code: train.delay > 60 ? "RETARD" : "OK", label: train.delay > 60 ? "Arrive (retard)" : "Arrive dans"};
     return {code: "SUIVANT", label: "Suivant dans"};
   }
 
@@ -556,6 +607,7 @@
     const addOrigin = document.getElementById("add-origin");
     const addDest = document.getElementById("add-dest");
     const addPos = document.getElementById("add-pos");
+    const trainFilterStation = document.getElementById("train-filter-station");
 
     const options = STATIONS.map((s, i) => `<option value="${i}">${s}</option>`).join("");
     stationSelect.innerHTML = options;
@@ -563,18 +615,42 @@
     addOrigin.innerHTML = options;
     addDest.innerHTML = options;
     addPos.innerHTML = options;
+    trainFilterStation.innerHTML = `<option value="-1">Toutes</option>` + options;
 
     stationSelect.value = STATIONS.indexOf("Paris Austerlitz");
   }
 
+  function filteredTrainsForSelect() {
+    const stationFilter = Number(document.getElementById("train-filter-station").value);
+    const dirFilter = Number(document.getElementById("train-filter-dir").value);
+    return trains
+      .filter(t => !t.deleted)
+      .filter(t => stationFilter === -1 || t.positionIndex === stationFilter)
+      .filter(t => dirFilter === 0 || t.direction === dirFilter)
+      .sort((a, b) => {
+        if (a.positionIndex !== b.positionIndex) return a.positionIndex - b.positionIndex;
+        return a.mission.localeCompare(b.mission);
+      });
+  }
+
   function renderTrainSelect() {
     const select = document.getElementById("train-select");
-    select.innerHTML = trains.map(t => {
+    const list = filteredTrainsForSelect();
+    select.innerHTML = list.map(t => {
       const posName = STATIONS[t.positionIndex] || "?";
-      return `<option value="${t.id}">${t.mission} — ${posName} (${t.direction === 1 ? "→ aval" : "← amont"})</option>`;
+      const flags = [];
+      if (t.delay > 60) flags.push("RET");
+      if (t.deleteNext) flags.push("SUPP+1");
+      if (t.terminusExceptionnel) flags.push("TERM");
+      const flagStr = flags.length ? " [" + flags.join(",") + "]" : "";
+      return `<option value="${t.id}">${t.mission} — ${posName} (${t.direction === 1 ? "→ aval" : "← amont"})${flagStr}</option>`;
     }).join("");
-    if (trains.length > 0) {
-      loadSelectedTrain(trains[0].id);
+    if (list.length > 0) {
+      loadSelectedTrain(list[0].id);
+    } else {
+      document.getElementById("edit-mission").value = "";
+      document.getElementById("edit-origin").value = "";
+      document.getElementById("edit-dest").value = "";
     }
   }
 
@@ -596,17 +672,16 @@
     const dirFilter = getDirectionFilter();
 
     const enriched = trains
-      .filter(t => t.active)
+      .filter(t => t.active || t.deleted || t.deleteNext || t.terminusExceptionnel)
       .map(t => ({ train: t, eta: etaToStation(t, stationIndex) }))
-      .filter(e => e.eta !== Infinity)
       .filter(e => dirFilter === 0 || e.train.direction === dirFilter)
       .sort((a, b) => a.eta - b.eta)
-      .slice(0, 12);
+      .slice(0, 20);
 
     enriched.forEach(e => {
       const t = e.train;
       const eta = e.eta;
-      const status = statusForEta(eta, t.delay);
+      const status = statusForTrain(t, eta);
       const tr = document.createElement("tr");
       tr.dataset.id = t.id;
 
@@ -620,11 +695,17 @@
         <td class="status status-${status.code}">${status.label}</td>
         <td class="time">${formatEta(eta)}</td>
       `;
+      tr.addEventListener("click", () => {
+        document.getElementById("train-select").value = t.id;
+        loadSelectedTrain(t.id);
+      });
       tbody.appendChild(tr);
     });
 
     const statsEl = document.getElementById("stats");
-    statsEl.textContent = `${trains.length} trains en circulation — gare observée : ${STATIONS[stationIndex]}`;
+    const activeCount = trains.filter(t => t.active && !t.deleted).length;
+    const deletedCount = trains.filter(t => t.deleted).length;
+    statsEl.textContent = `${activeCount} trains actifs, ${deletedCount} supprimés — gare observée : ${STATIONS[stationIndex]}`;
 
     document.getElementById("current-station-label").textContent = "Gare observée : " + STATIONS[stationIndex];
     document.getElementById("board-subtitle").textContent = "Vue locale — " + STATIONS[stationIndex];
@@ -644,6 +725,11 @@
     const tbody = document.getElementById("pcc-body");
     tbody.innerHTML = "";
     trains.forEach(t => {
+      const flags = [];
+      if (t.delay > 60) flags.push("RETARD");
+      if (t.deleted) flags.push("SUPPRIMÉ");
+      if (t.deleteNext) flags.push("SUPP+1");
+      if (t.terminusExceptionnel) flags.push("TERMINUS EXC.");
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${t.id}</td>
@@ -655,6 +741,8 @@
         <td>${t.offset.toFixed(0)} s</td>
         <td>${t.dwellRemaining.toFixed(0)} s</td>
         <td>${t.active ? "Oui" : "Non"}</td>
+        <td>${Math.round(t.delay / 60)} min</td>
+        <td>${flags.join(", ")}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -682,7 +770,7 @@
       bar.style.borderRadius = "999px";
 
       trains.forEach(t => {
-        if (!t.active) return;
+        if (!t.active || t.deleted) return;
         if (t.positionIndex === i && t.progress === 0) {
           const dot = document.createElement("div");
           dot.style.position = "absolute";
@@ -691,7 +779,7 @@
           dot.style.width = "8px";
           dot.style.height = "8px";
           dot.style.borderRadius = "50%";
-          dot.style.background = "#f7d117";
+          dot.style.background = t.delay > 60 ? "#ffb347" : "#f7d117";
           bar.appendChild(dot);
         } else {
           const dir = t.direction;
@@ -706,7 +794,7 @@
             dot.style.width = "8px";
             dot.style.height = "8px";
             dot.style.borderRadius = "50%";
-            dot.style.background = "#f7d117";
+            dot.style.background = t.delay > 60 ? "#ffb347" : "#f7d117";
             bar.appendChild(dot);
           }
         }
@@ -832,7 +920,7 @@
     const select = document.getElementById("train-select");
     const id = Number(select.value);
     const t = trains.find(tr => tr.id === id);
-    if (t) logEvent("TRAIN", `Train ${t.mission} retiré de la circulation.`);
+    if (t) logEvent("TRAIN", `Train ${t.mission} retiré de la circulation (supprimé).`);
     trains = trains.filter(tr => tr.id !== id);
     renderBoard();
     renderTrainSelect();
@@ -849,6 +937,83 @@
     logEvent("TRAIN", `Train ${t.mission} retardé de ${min} min.`);
     renderBoard();
     renderPCC();
+    renderLineSchema();
+  }
+
+  function addCustomDelay() {
+    const min = Number(document.getElementById("delay-custom").value) || 0;
+    if (min <= 0) return;
+    addDelayToSelected(min);
+  }
+
+  function markTrainDelayedFlag() {
+    const select = document.getElementById("train-select");
+    const id = Number(select.value);
+    const t = trains.find(tr => tr.id === id);
+    if (!t) return;
+    if (t.delay < 60) t.delay = 60;
+    logEvent("TRAIN", `Train ${t.mission} marqué comme “RETARDÉ”.`);
+    renderBoard();
+    renderPCC();
+    renderLineSchema();
+  }
+
+  function markTrainDeletedImmediate() {
+    const select = document.getElementById("train-select");
+    const id = Number(select.value);
+    const t = trains.find(tr => tr.id === id);
+    if (!t) return;
+    t.deleted = true;
+    t.active = false;
+    t.dwellRemaining = 0;
+    t.progress = 0;
+    t.offset = 0;
+    logEvent("TRAIN", `Train ${t.mission} supprimé immédiatement.`);
+    renderBoard();
+    renderTrainSelect();
+    renderPCC();
+    renderLineSchema();
+  }
+
+  function markTrainDeleteNext() {
+    const select = document.getElementById("train-select");
+    const id = Number(select.value);
+    const t = trains.find(tr => tr.id === id);
+    if (!t) return;
+    t.deleteNext = true;
+    logEvent("TRAIN", `Train ${t.mission} sera supprimé à la prochaine gare.`);
+    renderBoard();
+    renderPCC();
+    renderLineSchema();
+  }
+
+  function markTrainTerminusExceptionnel() {
+    const select = document.getElementById("train-select");
+    const id = Number(select.value);
+    const t = trains.find(tr => tr.id === id);
+    if (!t) return;
+    t.destIndex = t.positionIndex;
+    t.terminusExceptionnel = true;
+    logEvent("TRAIN", `Train ${t.mission} mis en terminus exceptionnel à ${STATIONS[t.positionIndex]}.`);
+    renderBoard();
+    renderPCC();
+    renderLineSchema();
+  }
+
+  function restoreTrain() {
+    const select = document.getElementById("train-select");
+    const id = Number(select.value);
+    const t = trains.find(tr => tr.id === id);
+    if (!t) return;
+    t.deleted = false;
+    t.active = true;
+    t.deleteNext = false;
+    t.terminusExceptionnel = false;
+    logEvent("TRAIN", `Train ${t.mission} rétabli en circulation.`);
+    renderBoard();
+    renderTrainSelect();
+    renderPCC();
+    renderLineSchema();
   }
 
   function setPreset(mode) {
@@ -873,7 +1038,7 @@
     if (!simulationRunning) return;
 
     trains.forEach(t => {
-      if (!t.active) return;
+      if (!t.active || t.deleted) return;
 
       if (t.offset > 0) {
         t.offset -= TICK_MS / 1000;
@@ -906,16 +1071,25 @@
           t.positionIndex += t.direction;
           t.progress = 0;
           t.dwellRemaining = DWELL_DEFAULT;
-          logEvent("TRAIN", `Train ${t.mission} arrivé à ${STATIONS[t.positionIndex]}.`);
+
+          if (t.deleteNext) {
+            t.deleted = true;
+            t.active = false;
+            t.dwellRemaining = 0;
+            logEvent("TRAIN", `Train ${t.mission} supprimé à ${STATIONS[t.positionIndex]} (suppression à la prochaine gare).`);
+          } else {
+            logEvent("TRAIN", `Train ${t.mission} arrivé à ${STATIONS[t.positionIndex]}.`);
+          }
         }
       }
     });
 
-    trains = trains.filter(t => t.active || t.offset > 0 || t.dwellRemaining > 0);
+    trains = trains.filter(t => t.active || t.offset > 0 || t.dwellRemaining > 0 || t.deleted);
 
     renderBoard();
     renderPCC();
     renderLineSchema();
+    renderTrainSelect();
   }
 
   function toggleSimulation() {
@@ -1063,9 +1237,16 @@
 
     document.getElementById("station-select").addEventListener("change", renderBoard);
     document.getElementById("train-select").addEventListener("change", e => loadSelectedTrain(e.target.value));
+    document.getElementById("train-filter-station").addEventListener("change", () => {
+      renderTrainSelect();
+    });
+    document.getElementById("train-filter-dir").addEventListener("change", () => {
+      renderTrainSelect();
+    });
   }
 
   init();
 </script>
 </body>
 </html>
+
