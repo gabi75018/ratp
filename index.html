@@ -287,18 +287,18 @@ function renderActiveEvent() {
                     </select>
                 </div>
                 <div>
-                    <label class="small-label">Environnement</label>
+                    <label class="small-label">Dangeurosité</label>
                     <select id="env">
-                        ${["Datacenter","Production","Test","Client","Bureau","Réseau","Sécurité","Inconnu"].map(v=>`<option value="${v}" ${e.env===v?"selected":""}>${v}</option>`).join("")}
+                        ${["Faible","Présente","Importante","Certaine"].map(v=>`<option value="${v}" ${e.env===v?"selected":""}>${v}</option>`).join("")}
                     </select>
                 </div>
             </div>
 
             <div class="row">
                 <div>
-                    <label class="small-label">Portée de l'impact</label>
+                    <label class="small-label">Nombre de personnes</label>
                     <select id="impactScope">
-                        ${["Inconnu","Localisé","Étendu","Global"].map(v=>`<option value="${v}" ${e.impactScope===v?"selected":""}>${v}</option>`).join("")}
+                        ${["1","2","3","+4","+6","+10","+30","+100"].map(v=>`<option value="${v}" ${e.impactScope===v?"selected":""}>${v}</option>`).join("")}
                     </select>
                 </div>
                 <div>
@@ -328,13 +328,13 @@ function renderActiveEvent() {
             <div id="comment-list">${e.comments.map(cm=>"<div>• "+cm+"</div>").join("")}</div>
 
             <h4>Actions / Services</h4>
-            ${serviceButton("Équipe N1")}
-            ${serviceButton("Équipe N2")}
-            ${serviceButton("Supervision")}
-            ${serviceButton("Réseau")}
-            ${serviceButton("Sécurité")}
-            ${serviceButton("Support client")}
-            ${serviceButton("Change manager")}
+            ${serviceButton("Police")}
+            ${serviceButton("Gendarmerie")}
+            ${serviceButton("Pompiers")}
+            ${serviceButton("Samu")}
+            ${serviceButton("SOS Medecin")}
+            ${serviceButton("Mairie de Paris")}
+            ${serviceButton("Sans intervention")}
 
             <h4>Validation</h4>
             <button class="btn" onclick="saveCoreFields()">💾 Sauvegarder</button>
