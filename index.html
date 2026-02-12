@@ -1,531 +1,980 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<title>Panel d'événements - Simulation</title>
-<style>
+  <meta charset="UTF-8" />
+  <title>MonEcole – Espace Élève</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-soft: #e0edff;
+      --bg: #0f172a;
+      --bg-soft: #111827;
+      --card: #020617;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #22c55e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --border: #1f2937;
+      --radius: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+    }
+
     body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background: #1b1b1b;
-        color: white;
-        display: flex;
-        height: 100vh;
+      background: radial-gradient(circle at top, #1e293b 0, #020617 55%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
     }
-    header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        background: #111;
-        padding: 10px;
-        text-align: center;
-        z-index: 10;
-        border-bottom: 2px solid #333;
+
+    /* Layout */
+    .sidebar {
+      width: 260px;
+      background: linear-gradient(180deg, #020617, #020617f0 60%, #020617);
+      border-right: 1px solid var(--border);
+      padding: 20px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
     }
-    .container {
-        display: flex;
-        width: 100%;
-        margin-top: 60px;
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
-    .column {
-        flex: 1;
-        padding: 10px;
-        overflow-y: auto;
-        border-right: 2px solid #333;
+
+    .logo-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 0, #60a5fa, #1d4ed8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 18px;
+      box-shadow: 0 0 18px rgba(37, 99, 235, 0.6);
     }
-    .column:last-child {
-        border-right: none;
+
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
+
+    .logo-text span:first-child {
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    .logo-text span:last-child {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .user-card {
+      background: radial-gradient(circle at top left, #1d4ed8 0, #020617 55%);
+      border-radius: var(--radius);
+      padding: 14px 14px 12px;
+      border: 1px solid rgba(37, 99, 235, 0.5);
+      box-shadow: 0 0 25px rgba(37, 99, 235, 0.35);
+    }
+
+    .user-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .user-main {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #022c22;
+      font-size: 18px;
+      border: 2px solid rgba(15, 23, 42, 0.9);
+    }
+
+    .user-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .user-info .name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .user-info .class {
+      font-size: 12px;
+      color: #bfdbfe;
+    }
+
+    .user-badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(191, 219, 254, 0.4);
+      color: #bfdbfe;
+    }
+
+    .user-footer {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-size: 11px;
+      color: #dbeafe;
+      opacity: 0.9;
+    }
+
+    .user-footer span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .user-footer span::before {
+      content: "•";
+      font-size: 14px;
+      color: #22c55e;
+    }
+
+    .nav-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 9px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+
+    .nav-item span.icon {
+      width: 20px;
+      text-align: center;
+      font-size: 15px;
+    }
+
+    .nav-item.active {
+      background: rgba(37, 99, 235, 0.18);
+      color: #e5e7eb;
+      border: 1px solid rgba(37, 99, 235, 0.6);
+      box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+    }
+
+    .nav-item:hover:not(.active) {
+      background: rgba(15, 23, 42, 0.9);
+      color: #e5e7eb;
+    }
+
+    .nav-footer {
+      margin-top: auto;
+      font-size: 11px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+    }
+
+    .nav-footer span {
+      display: block;
+    }
+
+    .nav-footer strong {
+      color: #e5e7eb;
+    }
+
+    /* Main */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 18px 22px;
+      gap: 16px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .topbar-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .topbar-left h1 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .topbar-left span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pill {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pill strong {
+      color: #e5e7eb;
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 0 16px rgba(37, 99, 235, 0.6);
+    }
+
+    .btn-primary span {
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 2.1fr 1.4fr;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
     .card {
-        background: #2a2a2a;
-        padding: 10px;
-        margin-bottom: 10px;
-        border-left: 5px solid #555;
+      background: radial-gradient(circle at top left, #020617, #020617f0);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 12px 12px 10px;
+      box-shadow: 0 0 18px rgba(15, 23, 42, 0.9);
     }
-    .btn {
-        padding: 6px 10px;
-        margin: 3px;
-        background: #444;
-        border: none;
-        color: white;
-        cursor: pointer;
-        font-size: 12px;
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
     }
-    .btn:hover {
-        background: #666;
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
-    .service-btn {
-        background: #0055aa;
+
+    .card-title span.icon {
+      font-size: 15px;
     }
-    .service-btn:hover {
-        background: #0077dd;
+
+    .card-subtitle {
+      font-size: 11px;
+      color: var(--muted);
     }
-    textarea, input, select {
-        width: 100%;
-        background: #222;
-        color: white;
-        border: 1px solid #444;
-        padding: 5px;
-        margin-bottom: 5px;
-        font-size: 12px;
+
+    .tag {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
     }
-    textarea {
-        height: 70px;
+
+    .tag.green {
+      border-color: rgba(34, 197, 94, 0.5);
+      color: #bbf7d0;
+      background: rgba(22, 163, 74, 0.15);
     }
-    .section-title {
-        font-size: 18px;
-        margin-bottom: 10px;
-        border-bottom: 1px solid #444;
-        padding-bottom: 5px;
+
+    .tag.orange {
+      border-color: rgba(245, 158, 11, 0.5);
+      color: #fed7aa;
+      background: rgba(245, 158, 11, 0.15);
     }
-    .small-label {
-        font-size: 11px;
-        color: #ccc;
+
+    .tag.blue {
+      border-color: rgba(59, 130, 246, 0.5);
+      color: #bfdbfe;
+      background: rgba(37, 99, 235, 0.15);
     }
-    .row {
-        display: flex;
-        gap: 5px;
+
+    /* Emploi du temps */
+    .timetable {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      margin-top: 4px;
     }
-    .row > div {
-        flex: 1;
+
+    .timetable th,
+    .timetable td {
+      border: 1px solid #111827;
+      padding: 5px 6px;
+      text-align: center;
     }
+
+    .timetable th {
+      background: #020617;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .timetable td {
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .course {
+      border-radius: 6px;
+      padding: 3px 4px;
+      font-size: 10px;
+      line-height: 1.3;
+    }
+
+    .course.maths {
+      background: rgba(59, 130, 246, 0.18);
+      border: 1px solid rgba(59, 130, 246, 0.6);
+    }
+
+    .course.fr {
+      background: rgba(236, 72, 153, 0.18);
+      border: 1px solid rgba(236, 72, 153, 0.6);
+    }
+
+    .course.svt {
+      background: rgba(34, 197, 94, 0.18);
+      border: 1px solid rgba(34, 197, 94, 0.6);
+    }
+
+    .course.his {
+      background: rgba(249, 115, 22, 0.18);
+      border: 1px solid rgba(249, 115, 22, 0.6);
+    }
+
+    .course.info {
+      background: rgba(56, 189, 248, 0.18);
+      border: 1px solid rgba(56, 189, 248, 0.6);
+    }
+
+    .course span {
+      display: block;
+    }
+
+    .course span.room {
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    /* Notes */
+    .grades-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .grade-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 7px;
+      border-radius: 7px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid #111827;
+      font-size: 11px;
+    }
+
+    .grade-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .grade-left span.subject {
+      font-weight: 500;
+    }
+
+    .grade-left span.details {
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .grade-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .grade-value {
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .grade-value.good {
+      color: #4ade80;
+    }
+
+    .grade-value.mid {
+      color: #facc15;
+    }
+
+    .grade-value.bad {
+      color: #f97316;
+    }
+
+    .grade-average {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    /* Messages / devoirs */
+    .messages-list,
+    .homework-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+      font-size: 11px;
+    }
+
+    .message,
+    .homework {
+      padding: 6px 7px;
+      border-radius: 7px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid #111827;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .message-header,
+    .homework-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .message-title,
+    .homework-title {
+      font-weight: 500;
+    }
+
+    .message-meta,
+    .homework-meta {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
     .badge {
-        display: inline-block;
-        padding: 2px 6px;
-        font-size: 11px;
-        border-radius: 3px;
-        margin-right: 4px;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
     }
-    .prio-P0 { background:#b30000; }
-    .prio-P1 { background:#e67300; }
-    .prio-P2 { background:#999900; }
-    .prio-P3 { background:#555555; }
-</style>
 
-<!-- Sons par priorité -->
-<audio id="soundP0" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"></audio>
-<audio id="soundP1" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
-<audio id="soundP2" src="https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"></audio>
-<audio id="soundP3" src="https://actions.google.com/sounds/v1/cartoon/pop.ogg"></audio>
+    .badge.unread {
+      border-color: rgba(59, 130, 246, 0.7);
+      color: #bfdbfe;
+      background: rgba(37, 99, 235, 0.15);
+    }
 
+    .badge.urgent {
+      border-color: rgba(248, 113, 113, 0.7);
+      color: #fecaca;
+      background: rgba(248, 113, 113, 0.15);
+    }
+
+    .badge.done {
+      border-color: rgba(34, 197, 94, 0.7);
+      color: #bbf7d0;
+      background: rgba(34, 197, 94, 0.15);
+    }
+
+    .footer {
+      margin-top: 4px;
+      font-size: 10px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      opacity: 0.7;
+    }
+
+    @media (max-width: 980px) {
+      body {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        gap: 16px;
+        overflow-x: auto;
+      }
+      .nav-footer {
+        display: none;
+      }
+      .main {
+        padding: 14px;
+      }
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
-
-<header>
-    <h2>Panel d'événements – Simulation</h2>
-    <div id="stats"></div>
-</header>
-
-<div class="container">
-
-    <!-- FILE D'ÉVÉNEMENTS -->
-    <div class="column">
-        <div class="section-title">📥 Événements entrants</div>
-        <div id="queue-list"></div>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">M</div>
+      <div class="logo-text">
+        <span>MonEcole</span>
+        <span>Espace numérique élève</span>
+      </div>
     </div>
 
-    <!-- ÉVÉNEMENT ACTIF / DOSSIER -->
-    <div class="column">
-        <div class="section-title">📂 Dossier en cours</div>
-        <div id="active-event">Aucun événement sélectionné.</div>
+    <div class="user-card">
+      <div class="user-header">
+        <div class="user-main">
+          <div class="avatar">G</div>
+          <div class="user-info">
+            <span class="name">Gabriel Dupont</span>
+            <span class="class">1ère Générale – Groupe A</span>
+          </div>
+        </div>
+        <div class="user-badge">Élève connecté</div>
+      </div>
+      <div class="user-footer">
+        <span>Année 2024–2025</span>
+        <span>Paris – Lycée Fictif</span>
+      </div>
     </div>
 
-    <!-- DOSSIERS ENVOYÉS + HISTORIQUE -->
-    <div class="column">
-        <div class="section-title">🚀 Dossiers envoyés</div>
-        <div id="actions"></div>
-
-        <div class="section-title" style="margin-top:20px;">📚 Historique</div>
-        <div id="history"></div>
+    <div>
+      <div class="nav-section-title">Navigation</div>
+      <ul class="nav-list">
+        <li class="nav-item active">
+          <span class="icon">🏠</span>
+          <span>Tableau de bord</span>
+        </li>
+        <li class="nav-item">
+          <span class="icon">📅</span>
+          <span>Emploi du temps</span>
+        </li>
+        <li class="nav-item">
+          <span class="icon">📝</span>
+          <span>Notes & bulletins</span>
+        </li>
+        <li class="nav-item">
+          <span class="icon">📨</span>
+          <span>Messagerie</span>
+        </li>
+        <li class="nav-item">
+          <span class="icon">📚</span>
+          <span>Devoirs & cahier de texte</span>
+        </li>
+        <li class="nav-item">
+          <span class="icon">🚪</span>
+          <span>Vie scolaire (retards, absences)</span>
+        </li>
+      </ul>
     </div>
 
-</div>
+    <div>
+      <div class="nav-section-title">Raccourcis</div>
+      <ul class="nav-list">
+        <li class="nav-item">
+          <span class="icon">⭐</span>
+          <span>Dernier bulletin</span>
+        </li>
+        <li class="nav-item">
+          <span class="icon">📎</span>
+          <span>Documents officiels</span>
+        </li>
+        <li class="nav-item">
+          <span class="icon">⚙️</span>
+          <span>Paramètres du compte</span>
+        </li>
+      </ul>
+    </div>
 
-<script>
-/* ------------------------------
-   SCÉNARIOS NEUTRES
---------------------------------*/
-const SCENARIOS = [
-    {label:"Arrêt cardio-respiratoire", type:"Médical", prio:"P0", desc:"Victime inconsciente, respiration absente.", victims:1, env:"Domicile"},
-    {label:"Feu d'appartement", type:"Incendie", prio:"P0", desc:"Fumée noire, personnes coincées.", victims:2, env:"Immeuble"},
-    {label:"Accident frontal", type:"Accident", prio:"P1", desc:"Deux voitures, un coincé.", victims:1, env:"Route"},
-    {label:"Chute d'un balcon", type:"Accident", prio:"P0", desc:"Chute signalée.", victims:1, env:"Immeuble"},
-    {label:"Début d'incendie de véhicule", type:"Incendie", prio:"P0", desc:"Flammes légères.", victims:0, env:"Parking"},
-    {label:"Personne bloquée dehors", type:"Divers", prio:"P1", desc:"Porte claquée.", victims:0, env:"Domicile"},
-    {label:"Signalement de bruit suspect", type:"Police", prio:"P1", desc:"Bruits inhabituels.", victims:0, env:"Immeuble"},
-    {label:"Personne bloquée dans ascenseur", type:"Technique", prio:"P0", desc:"Ascenseur immobilisé.", victims:1, env:"Immeuble"},
-    {label:"Agression couteau", type:"Agression", prio:"P0", desc:"Victime poignardée, saigne abondamment.", victims:1, env:"Voie publique"},
-    {label:"Vieil homme perdu", type:"Médical", prio:"P2", desc:"Confusion, marche instable.", victims:1, env:"Parc"},
-    {label:"Odeur de gaz", type:"Risque", prio:"P1", desc:"Odeur forte dans immeuble.", victims:0, env:"Immeuble"},
-    {label:"OVNI sur le toit", type:"Bizarre", prio:"P3", desc:"Personne dit être observée.", victims:0, env:"Immeuble"},
-    {label:"Enfant qui rigole", type:"Douteux", prio:"P3", desc:"Probable canular.", victims:0, env:"Domicile"},
-    {label:"Suicide pont", type:"Critique", prio:"P0", desc:"Personne sur rebord.", victims:1, env:"Pont"},
-    {label:"Malaise métro", type:"Médical", prio:"P1", desc:"Victime au sol, respiration difficile.", victims:1, env:"Transport"},
-    {label:"Voisin se prend pour un poulet", type:"Bizarre", prio:"P3", desc:"Crie depuis 20 minutes.", victims:0, env:"Immeuble"},
-    {label:"Course poursuite scooter", type:"Police", prio:"P1", desc:"Scooter refuse d'obtempérer.", victims:0, env:"Route"},
-    {label:"Fuite importante d'eau", type:"Technique", prio:"P0", desc:"Inondation en cours.", victims:0, env:"Appartement"},
-    {label:"Signalement d'odeur forte", type:"Risque", prio:"P0", desc:"Odeur inhabituelle.", victims:0, env:"Cage d'escalier"},
-    {label:"Accident de trottinette", type:"Accident", prio:"P0", desc:"Personne au sol.", victims:1, env:"Rue"},
-    {label:"Chute d'un toit", type:"Accident", prio:"P0", desc:"Personne au sol.", victims:1, env:"Chantier"},
-    {label:"Déclenchement d'alarme incendie", type:"Incendie", prio:"P0", desc:"Alarme active.", victims:0, env:"Bâtiment"},
-    {label:"Trafic suspect", type:"Douanes", prio:"P2", desc:"Chargements nocturnes suspects.", victims:0, env:"Zone industrielle"},
-    {label:"Bagarre générale", type:"Agression", prio:"P1", desc:"Plusieurs blessés possibles.", victims:2, env:"Voie publique"},
-    {label:"Chute d'un toit", type:"Accident", prio:"P0", desc:"Victime inconsciente.", victims:1, env:"Chantier"},
-    {label:"Crise d'épilepsie", type:"Médical", prio:"P1", desc:"Convulsions en cours.", victims:1, env:"Lieu public"},
-    {label:"Ascenseur bloqué", type:"Risque", prio:"P2", desc:"Personne enfermée, panique.", victims:1, env:"Immeuble"},
-    {label:"Complot imaginaire", type:"Bizarre", prio:"P3", desc:"Parle de caméras cachées.", victims:0, env:"Inconnu"},
-    {label:"Violences conjugales", type:"Police", prio:"P1", desc:"Cris, bruits de coups.", victims:1, env:"Domicile"},
-    {label:"Accrochage de véhicules", type:"Accident", prio:"P1", desc:"Deux véhicules touchés.", victims:0, env:"Rue"},
-    {label:"Personne bloquée dehors", type:"Divers", prio:"P1", desc:"Porte claquée.", victims:0, env:"Domicile"},
-    {label:"Signalement de bruit suspect", type:"Police", prio:"P1", desc:"Bruits inhabituels.", victims:0, env:"Immeuble"},
-    {label:"Intox alcool + chute", type:"Médical", prio:"P2", desc:"Plaie tête, alcoolisé.", victims:1, env:"Domicile"},
-    {label:"Explosion entendue", type:"Risque", prio:"P1", desc:"Détonation forte, fumée.", victims:0, env:"Rue"},
-    {label:"Cri animal étrange", type:"Bizarre", prio:"P3", desc:"Appelant parle d'un monstre.", victims:0, env:"Forêt"},
-    {label:"Fuite chimique", type:"Risque", prio:"P0", desc:"Odeur piquante, irritation yeux.", victims:1, env:"Usine"},
-    {label:"Malaise sur la voie publique", type:"Médical", prio:"P0", desc:"Personne au sol.", victims:1, env:"Rue"},
-    {label:"Fumée dans un appartement", type:"Incendie", prio:"P0", desc:"Fumée visible.", victims:0, env:"Immeuble"},
-    {label:"Chute d'un balcon", type:"Accident", prio:"P0", desc:"Chute signalée.", victims:1, env:"Immeuble"},
-    {label:"Début d'incendie de véhicule", type:"Incendie", prio:"P0", desc:"Flammes légères.", victims:0, env:"Parking"},
-    {label:"Personne bloquée dans ascenseur", type:"Technique", prio:"P0", desc:"Ascenseur immobilisé.", victims:1, env:"Immeuble"},
-    {label:"Tapage important", type:"Police", prio:"P1", desc:"Nuisances sonores.", victims:0, env:"Immeuble"},
-    {label:"Dégradation de mobilier urbain", type:"Police", prio:"P1", desc:"Dégradations signalées.", victims:0, env:"Rue"},
-    {label:"Animal errant", type:"Divers", prio:"P1", desc:"Animal signalé.", victims:0, env:"Parc"},
-    {label:"Fuite légère d'eau", type:"Technique", prio:"P1", desc:"Eau au sol.", victims:0, env:"Appartement"},
-    {label:"Personne désorientée", type:"Police", prio:"P1", desc:"Comportement inhabituel.", victims:1, env:"Rue"},
-    {label:"Objets tombés d'un balcon", type:"Police", prio:"P1", desc:"Chute d'objets.", victims:0, env:"Immeuble"},
-    {label:"Petit feu de poubelle", type:"Incendie", prio:"P1", desc:"Fumée légère.", victims:0, env:"Rue"},
-    {label:"Accrochage de véhicules", type:"Accident", prio:"P1", desc:"Deux véhicules touchés.", victims:0, env:"Rue"},
-    {label:"Personne bloquée dehors", type:"Divers", prio:"P1", desc:"Porte claquée.", victims:0, env:"Domicile"},
-    {label:"Signalement de bruit suspect", type:"Police", prio:"P1", desc:"Bruits inhabituels.", victims:0, env:"Immeuble"},
-    {label:"Demande d'intervention mairie", type:"Mairie", prio:"P2", desc:"Problème d'éclairage.", victims:0, env:"Rue"},
-    {label:"Nid-de-poule important", type:"Mairie", prio:"P2", desc:"Chaussée abîmée.", victims:0, env:"Route"},
-    {label:"Arbre gênant la circulation", type:"Mairie", prio:"P2", desc:"Branche tombée.", victims:0, env:"Rue"},
-    {label:"Signalement de scooter gênant", type:"Police", prio:"P2", desc:"Stationnement gênant.", victims:0, env:"Trottoir"},
-    {label:"Demande de vérification compteur", type:"Technique", prio:"P2", desc:"Suspicion anomalie.", victims:0, env:"Appartement"},
-    {label:"Bruit de ventilation", type:"Technique", prio:"P2", desc:"Bruit persistant.", victims:0, env:"Immeuble"},
-    {label:"Petit dégât des eaux", type:"Technique", prio:"P2", desc:"Humidité murale.", victims:0, env:"Appartement"},
-    {label:"Demande d'information mairie", type:"Mairie", prio:"P2", desc:"Renseignement demandé.", victims:0, env:"Bureau"},
-    {label:"Signalement de véhicule abandonné", type:"Police", prio:"P2", desc:"Véhicule immobile.", victims:0, env:"Rue"},
-    {label:"Problème de portail automatique", type:"Technique", prio:"P2", desc:"Portail bloqué.", victims:0, env:"Résidence"},
-    {label:"Signalement de nuisance légère", type:"Police", prio:"P2", desc:"Bruit modéré.", victims:0, env:"Immeuble"},
-    {label:"Demande de passage SOS Médecin", type:"Médical", prio:"P2", desc:"Consultation souhaitée.", victims:1, env:"Domicile"},
-    {label:"Demande de renseignement", type:"Divers", prio:"P3", desc:"Information générale.", victims:0, env:"Téléphone"},
-    {label:"Signalement de lumière restée allumée", type:"Mairie", prio:"P3", desc:"Éclairage inutile.", victims:0, env:"Rue"},
-    {label:"Petit bruit dans un local", type:"Technique", prio:"P3", desc:"Bruit léger.", victims:0, env:"Local"},
-    {label:"Demande de conseil", type:"Divers", prio:"P3", desc:"Besoin d'avis.", victims:0, env:"Téléphone"},
-    {label:"Vérification de badge d'accès", type:"Sécurité", prio:"P3", desc:"Badge non reconnu.", victims:0, env:"Entrée"},
-    {label:"Signalement de vélo mal attaché", type:"Police", prio:"P3", desc:"Vélo instable.", victims:0, env:"Rue"},
-    {label:"Demande de passage mairie", type:"Mairie", prio:"P3", desc:"Simple vérification.", victims:0, env:"Quartier"},
-    {label:"Demande de contact gendarmerie", type:"Gendarmerie", prio:"P3", desc:"Renseignement.", victims:0, env:"Téléphone"},
-    {label:"Demande de contact police", type:"Police", prio:"P3", desc:"Information simple.", victims:0, env:"Téléphone"},
-    {label:"Demande de contact pompiers", type:"Pompiers", prio:"P3", desc:"Renseignement.", victims:0, env:"Téléphone"},
-    {label:"Signalement de panneau penché", type:"Mairie", prio:"P3", desc:"Panneau instable.", victims:0, env:"Rue"},
-    {label:"Demande de passage technique", type:"Technique", prio:"P3", desc:"Contrôle léger.", victims:0, env:"Immeuble"},
-    {label:"Signalement de bruit de ventilation", type:"Technique", prio:"P3", desc:"Bruit faible.", victims:0, env:"Cave"}
-];
+    <div class="nav-footer">
+      <span><strong>MonEcole</strong> – Espace élève fictif</span>
+      <span>Version 1.0 – Interface de jeu / test</span>
+    </div>
+  </aside>
 
-/* ------------------------------
-   VARIABLES
---------------------------------*/
-let queue = [];
-let activeEvent = null;
-let actions = [];
-let history = [];
-let eventID = 1;
-
-/* ------------------------------
-   SONS PAR PRIORITÉ
---------------------------------*/
-function playPrioritySound(prio) {
-    const audio = document.getElementById("sound" + prio);
-    if (audio) {
-        // certains navigateurs exigent une interaction avant le son
-        audio.currentTime = 0;
-        audio.play().catch(()=>{});
-    }
-}
-
-/* ------------------------------
-   GÉNÉRATION D'ÉVÉNEMENTS
---------------------------------*/
-function generateEvent() {
-    const s = SCENARIOS[Math.floor(Math.random()*SCENARIOS.length)];
-    const ev = {
-        id: eventID++,
-        scenario: s,
-        time: new Date().toLocaleTimeString(),
-        location: randomLocation(),
-        comments: [],
-        services: [],
-        dossierSent: false,
-        // champs libres
-        freeDesc: "",
-        gravity: s.prio,
-        env: s.env,
-        tag: "",
-        impactScope: "Inconnu",
-        userAffected: "Inconnu",
-        workaround: "Inconnu"
-    };
-    queue.push(ev);
-    renderQueue();
-    playPrioritySound(s.prio);
-}
-
-function randomLocation() {
-    const zones = ["Zone A", "Zone B", "Zone C", "Cluster 1", "Cluster 2", "Segment X", "Segment Y"];
-    return zones[Math.floor(Math.random()*zones.length)];
-}
-
-/* ------------------------------
-   AFFICHAGE FILE
---------------------------------*/
-function renderQueue() {
-    const div = document.getElementById("queue-list");
-    div.innerHTML = "";
-    queue.forEach(ev => {
-        div.innerHTML += `
-            <div class="card">
-                <b>#${ev.id}</b> – ${ev.scenario.label}<br>
-                <span class="badge prio-${ev.scenario.prio}">${ev.scenario.prio}</span>
-                <span class="small-label">${ev.scenario.type}</span><br>
-                ${ev.location}<br>
-                <span class="small-label">Reçu à ${ev.time}</span><br>
-                <button class="btn" onclick="takeEvent(${ev.id})">Prendre en charge</button>
-            </div>
-        `;
-    });
-}
-
-/* ------------------------------
-   PRENDRE UN ÉVÉNEMENT
---------------------------------*/
-function takeEvent(id) {
-    activeEvent = queue.find(e => e.id === id);
-    queue = queue.filter(e => e.id !== id);
-    renderQueue();
-    renderActiveEvent();
-}
-
-/* ------------------------------
-   AFFICHAGE DOSSIER
---------------------------------*/
-function renderActiveEvent() {
-    if (!activeEvent) {
-        document.getElementById("active-event").innerHTML = "Aucun événement sélectionné.";
-        return;
-    }
-
-    const e = activeEvent;
-
-    document.getElementById("active-event").innerHTML = `
-        <div class="card">
-            <h3>Dossier #${e.id} ${e.dossierSent ? "(envoyé – modifiable)" : "(à compléter)"}</h3>
-            <div class="small-label">Reçu à ${e.time} – ${e.location}</div>
-            <b>${e.scenario.label}</b><br>
-            Type : ${e.scenario.type} – 
-            <span class="badge prio-${e.scenario.prio}">${e.scenario.prio}</span><br>
-            <p>${e.scenario.desc}</p>
-
-            <h4>Description libre</h4>
-            <textarea id="freeDesc">${e.freeDesc}</textarea>
-
-            <h4>Évaluation</h4>
-            <div class="row">
-                <div>
-                    <label class="small-label">Gravité</label>
-                    <select id="gravity">
-                        ${["P0","P1","P2","P3"].map(p=>`<option value="${p}" ${e.gravity===p?"selected":""}>${p}</option>`).join("")}
-                    </select>
-                </div>
-                <div>
-                    <label class="small-label">Dangeurosité</label>
-                    <select id="env">
-                        ${["Faible","Présente","Importante","Certaine"].map(v=>`<option value="${v}" ${e.env===v?"selected":""}>${v}</option>`).join("")}
-                    </select>
-                </div>
-            </div>
-
-            <div class="row">
-                <div>
-                    <label class="small-label">Nombre de personnes</label>
-                    <select id="impactScope">
-                        ${["1","2","3","+4","+6","+10","+30","+100"].map(v=>`<option value="${v}" ${e.impactScope===v?"selected":""}>${v}</option>`).join("")}
-                    </select>
-                </div>
-                <div>
-                    <label class="small-label">Utilisateurs affectés</label>
-                    <select id="userAffected">
-                        ${["Inconnu","Peu","Beaucoup","Critique"].map(v=>`<option value="${v}" ${e.userAffected===v?"selected":""}>${v}</option>`).join("")}
-                    </select>
-                </div>
-            </div>
-
-            <div class="row">
-                <div>
-                    <label class="small-label">Contournement possible</label>
-                    <select id="workaround">
-                        ${["Inconnu","Oui","Non"].map(v=>`<option value="${v}" ${e.workaround===v?"selected":""}>${v}</option>`).join("")}
-                    </select>
-                </div>
-                <div>
-                    <label class="small-label">Tag / catégorie libre</label>
-                    <input id="tag" value="${e.tag}">
-                </div>
-            </div>
-
-            <h4>Commentaires</h4>
-            <textarea id="comment"></textarea>
-            <button class="btn" onclick="addComment()">Ajouter commentaire</button>
-            <div id="comment-list">${e.comments.map(cm=>"<div>• "+cm+"</div>").join("")}</div>
-
-            <h4>Actions / Services</h4>
-            ${serviceButton("Police")}
-            ${serviceButton("Gendarmerie")}
-            ${serviceButton("Pompiers")}
-            ${serviceButton("Samu")}
-            ${serviceButton("SOS Medecin")}
-            ${serviceButton("Techniciens")}
-            ${serviceButton("Mairie de Paris")}
-            ${serviceButton("Sans intervention")}
-
-            <h4>Validation</h4>
-            <button class="btn" onclick="saveCoreFields()">💾 Sauvegarder</button>
-            <button class="btn" onclick="sendDossier()">📤 Envoyer dossier</button>
-            <button class="btn" onclick="closeEvent()">✅ Clôturer</button>
+  <!-- Main -->
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1>Bonjour, Gabriel 👋</h1>
+        <span>Voici un aperçu de ta journée et de ta scolarité.</span>
+      </div>
+      <div class="topbar-right">
+        <div class="pill">
+          📅 <span>Aujourd’hui :</span> <strong>Mardi 12 février 2026</strong>
         </div>
-    `;
-}
+        <button class="btn-primary">
+          <span>⚡</span> Mode “jeu” activé
+        </button>
+      </div>
+    </header>
 
-function serviceButton(name) {
-    return `<button class="btn service-btn" onclick="sendService('${name}')">${name}</button>`;
-}
-
-/* ------------------------------
-   SAUVEGARDE
---------------------------------*/
-function saveCoreFields() {
-    if (!activeEvent) return;
-    const e = activeEvent;
-    e.freeDesc = document.getElementById("freeDesc").value;
-    e.gravity = document.getElementById("gravity").value;
-    e.env = document.getElementById("env").value;
-    e.impactScope = document.getElementById("impactScope").value;
-    e.userAffected = document.getElementById("userAffected").value;
-    e.workaround = document.getElementById("workaround").value;
-    e.tag = document.getElementById("tag").value;
-}
-
-/* ------------------------------
-   ENVOI DU DOSSIER
---------------------------------*/
-function sendDossier() {
-    if (!activeEvent) return;
-    saveCoreFields();
-    activeEvent.dossierSent = true;
-
-    const existing = actions.find(a => a.id === activeEvent.id);
-    if (!existing) {
-        actions.push({
-            id: activeEvent.id,
-            label: activeEvent.scenario.label,
-            time: new Date().toLocaleTimeString(),
-            services: [...activeEvent.services]
-        });
-    } else {
-        existing.services = [...activeEvent.services];
-    }
-    renderActions();
-    renderActiveEvent();
-}
-
-/* ------------------------------
-   COMMENTAIRES
---------------------------------*/
-function addComment() {
-    if (!activeEvent) return;
-    const txt = document.getElementById("comment").value.trim();
-    if (!txt) return;
-    activeEvent.comments.push(txt);
-    document.getElementById("comment").value = "";
-    renderActiveEvent();
-}
-
-/* ------------------------------
-   SERVICES
---------------------------------*/
-function sendService(s) {
-    if (!activeEvent) return;
-    activeEvent.services.push(s);
-
-    if (activeEvent.dossierSent) {
-        const a = actions.find(a => a.id === activeEvent.id);
-        if (a) a.services = [...activeEvent.services];
-        else actions.push({
-            id: activeEvent.id,
-            label: activeEvent.scenario.label,
-            time: new Date().toLocaleTimeString(),
-            services: [...activeEvent.services]
-        });
-        renderActions();
-    }
-    renderActiveEvent();
-}
-
-function renderActions() {
-    const div = document.getElementById("actions");
-    div.innerHTML = actions.map(a => `
+    <section class="grid">
+      <!-- Colonne gauche -->
+      <div class="col-left">
+        <!-- Emploi du temps -->
         <div class="card">
-            <b>Dossier #${a.id}</b> – ${a.label}<br>
-            <span class="small-label">Envoyé à ${a.time}</span><br>
-            Services engagés : ${a.services.length ? a.services.join(", ") : "Aucun"}
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <span class="icon">📅</span>
+                Emploi du temps – Aujourd’hui
+              </div>
+              <div class="card-subtitle">
+                Journée de cours – Semaine A – Mardi
+              </div>
+            </div>
+            <span class="tag blue">Vue élève</span>
+          </div>
+
+          <table class="timetable">
+            <thead>
+              <tr>
+                <th>Heure</th>
+                <th>Salle</th>
+                <th>Cours</th>
+                <th>Professeur</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>08h00 – 09h00</td>
+                <td>204</td>
+                <td>
+                  <div class="course maths">
+                    <span>Mathématiques</span>
+                    <span class="room">Chapitre : Fonctions – Exercices</span>
+                  </div>
+                </td>
+                <td>M. Laurent</td>
+              </tr>
+              <tr>
+                <td>09h00 – 10h00</td>
+                <td>112</td>
+                <td>
+                  <div class="course.fr">
+                    <span>Français</span>
+                    <span class="room">Dissertation – Préparation</span>
+                  </div>
+                </td>
+                <td>Mme Dubois</td>
+              </tr>
+              <tr>
+                <td>10h00 – 10h15</td>
+                <td>—</td>
+                <td>
+                  <div class="course">
+                    <span>Récréation</span>
+                    <span class="room">Pause</span>
+                  </div>
+                </td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td>10h15 – 11h15</td>
+                <td>305</td>
+                <td>
+                  <div class="course.info">
+                    <span>NSI / Informatique</span>
+                    <span class="room">Projet : Simulation & systèmes</span>
+                  </div>
+                </td>
+                <td>M. Bernard</td>
+              </tr>
+              <tr>
+                <td>11h15 – 12h10</td>
+                <td>Lab 2</td>
+                <td>
+                  <div class="course.svt">
+                    <span>SVT</span>
+                    <span class="room">TP – Observation au microscope</span>
+                  </div>
+                </td>
+                <td>Mme Leroy</td>
+              </tr>
+              <tr>
+                <td>12h10 – 13h30</td>
+                <td>—</td>
+                <td>
+                  <div class="course">
+                    <span>Pause déjeuner</span>
+                    <span class="room">Cantine / extérieur</span>
+                  </div>
+                </td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td>13h30 – 14h30</td>
+                <td>108</td>
+                <td>
+                  <div class="course.his">
+                    <span>Histoire-Géographie</span>
+                    <span class="room">Guerre froide – Synthèse</span>
+                  </div>
+                </td>
+                <td>M. Martin</td>
+              </tr>
+              <tr>
+                <td>14h30 – 16h00</td>
+                <td>Info 1</td>
+                <td>
+                  <div class="course.info">
+                    <span>Atelier projet</span>
+                    <span class="room">Simulation / Dashboard / Bot</span>
+                  </div>
+                </td>
+                <td>M. Bernard</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-    `).join("");
-}
 
-/* ------------------------------
-   CLÔTURE
---------------------------------*/
-function closeEvent() {
-    if (!activeEvent) return;
-    history.push(activeEvent);
-    actions = actions.filter(a => a.id !== activeEvent.id);
-    activeEvent = null;
-    renderActiveEvent();
-    renderActions();
-    renderHistory();
-}
-
-function renderHistory() {
-    const div = document.getElementById("history");
-    div.innerHTML = history.map(h => `
+        <!-- Notes -->
         <div class="card">
-            <b>#${h.id}</b> – ${h.scenario.label}<br>
-            Gravité : ${h.gravity} – Environnement : ${h.env}<br>
-            Portée : ${h.impactScope} – Utilisateurs : ${h.userAffected}<br>
-            Services : ${h.services.join(", ") || "Aucun"}<br>
-            Commentaires : ${h.comments.length}<br>
-            Tag : ${h.tag || "N/A"}
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <span class="icon">📝</span>
+                Notes récentes & moyennes
+              </div>
+              <div class="card-subtitle">
+                Dernières évaluations enregistrées – Trimestre 2
+              </div>
+            </div>
+            <span class="tag green">Moyenne générale : 15,4 / 20</span>
+          </div>
+
+          <div class="grades-list">
+            <div class="grade-row">
+              <div class="grade-left">
+                <span class="subject">Mathématiques</span>
+                <span class="details">Contrôle – Fonctions – 1h</span>
+              </div>
+              <div class="grade-right">
+                <span class="grade-average">Moy. classe : 11,8</span>
+                <span class="grade-value good">17,5 / 20</span>
+              </div>
+            </div>
+
+            <div class="grade-row">
+              <div class="grade-left">
+                <span class="subject">Français</span>
+                <span class="details">Rédaction – Argumentation</span>
+              </div>
+              <div class="grade-right">
+                <span class="grade-average">Moy. classe : 13,2</span>
+                <span class="grade-value mid">14,0 / 20</span>
+              </div>
+            </div>
+
+            <div class="grade-row">
+              <div class="grade-left">
+                <span class="subject">NSI / Informatique</span>
+                <span class="details">Projet – Simulation & architecture</span>
+              </div>
+              <div class="grade-right">
+                <span class="grade-average">Moy. classe : 15,0</span>
+                <span class="grade-value good">18,5 / 20</span>
+              </div>
+            </div>
+
+            <div class="grade-row">
+              <div class="grade-left">
+                <span class="subject">Histoire-Géographie</span>
+                <span class="details">Contrôle – Guerre froide</span>
+              </div>
+              <div class="grade-right">
+                <span class="grade-average">Moy. classe : 12,4</span>
+                <span class="grade-value mid">13,5 / 20</span>
+              </div>
+            </div>
+          </div>
         </div>
-    `).join("");
-}
+      </div>
 
-/* ------------------------------
-   STATISTIQUES
---------------------------------*/
-setInterval(() => {
-    document.getElementById("stats").innerHTML =
-        `En attente: ${queue.length} | En cours: ${activeEvent ? "#"+activeEvent.id : "aucun"} | Envoyés: ${actions.length} | Historique: ${history.length}`;
-}, 500);
+      <!-- Colonne droite -->
+      <div class="col-right">
+        <!-- Devoirs -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <span class="icon">📚</span>
+                Devoirs à faire
+              </div>
+              <div class="card-subtitle">
+                Prochains devoirs à rendre – Semaine en cours
+              </div>
+            </div>
+            <span class="tag orange">3 devoirs à venir</span>
+          </div>
 
-/* ------------------------------
-   GÉNÉRATION RÉGULIÈRE
---------------------------------*/
-setInterval(() => generateEvent(), 2000 + Math.random()*1000);
+          <div class="homework-list">
+            <div class="homework">
+              <div class="homework-header">
+                <span class="homework-title">Maths – Exercices sur les fonctions</span>
+                <span class="badge urgent">Pour demain</span>
+              </div>
+              <span class="homework-meta">
+                À rendre le 13/02 – Chapitre 4 – Exos 12, 13, 15, 18
+              </span>
+            </div>
 
+            <div class="homework">
+              <div class="homework-header">
+                <span class="homework-title">Français – Plan détaillé</span>
+                <span class="badge">Pour cette semaine</span>
+              </div>
+              <span class="homework-meta">
+                À rendre le 15/02 – Sujet : “Le progrès est-il toujours positif ?”
+              </span>
+            </div>
 
-</script>
+            <div class="homework">
+              <div class="homework-header">
+                <span class="homework-title">NSI – Prototype de simulation</span>
+                <span class="badge done">En cours</span>
+              </div>
+              <span class="homework-meta">
+                À rendre le 19/02 – Dashboard + logique d’événements
+              </span>
+            </div>
+          </div>
+        </div>
 
+        <!-- Messages -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <span class="icon">📨</span>
+                Messagerie & vie scolaire
+              </div>
+              <div class="card-subtitle">
+                Derniers messages reçus – Absences, infos, professeurs
+              </div>
+            </div>
+            <span class="tag">2 non lus</span>
+          </div>
+
+          <div class="messages-list">
+            <div class="message">
+              <div class="message-header">
+                <span class="message-title">Message de M. Bernard (NSI)</span>
+                <span class="badge unread">Nouveau</span>
+              </div>
+              <span class="message-meta">
+                “Pense à sauvegarder une version de ton projet de simulation pour la prochaine séance.”
+              </span>
+            </div>
+
+            <div class="message">
+              <div class="message-header">
+                <span class="message-title">Vie scolaire – Retard justifié</span>
+                <span class="badge">Info</span>
+              </div>
+              <span class="message-meta">
+                Ton retard du 05/02 à 08h00 a été justifié. Aucune sanction appliquée.
+              </span>
+            </div>
+
+            <div class="message">
+              <div class="message-header">
+                <span class="message-title">Administration – Réunion parents-profs</span>
+                <span class="badge">Important</span>
+              </div>
+              <span class="message-meta">
+                Réunion prévue le 22/02 à partir de 17h30. Créneaux à réserver en ligne.
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+          <span>Interface fictive inspirée d’École Directe / Pronote.</span>
+          <span>Utilisation : jeu, tests, maquettes.</span>
+        </div>
+      </div>
+    </section>
+  </main>
 </body>
 </html>
